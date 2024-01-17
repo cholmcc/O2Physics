@@ -137,6 +137,7 @@ std::shared_ptr<TH3> hTOFmassEta[5][2];
 std::shared_ptr<TH3> hDCAxy[2][5][2];
 std::shared_ptr<TH3> hDCAz[2][5][2];
 std::shared_ptr<TH2> hGloTOFtracks[2];
+std::shared_ptr<TH2> hDeltaP[2][5];
 o2::base::MatLayerCylSet* lut = nullptr;
 
 std::vector<NucleusCandidate> candidates;
@@ -166,6 +167,7 @@ struct nucleiSpectra {
   Configurable<float> cfgCMrapidity{"cfgCMrapidity", 0.f, "Rapidity of the center of mass (only for p-Pb)"};
   Configurable<float> cfgCutVertex{"cfgCutVertex", 10.0f, "Accepted z-vertex range"};
   Configurable<float> cfgCutEta{"cfgCutEta", 0.8f, "Eta range for tracks"};
+  Configurable<float> cfgCutTpcMom{"cfgCutTpcMom", 0.2f, "Minimum TPC momentum for tracks"};
   Configurable<float> cfgCutRapidityMin{"cfgCutRapidityMin", -0.5, "Minimum rapidity for tracks"};
   Configurable<float> cfgCutRapidityMax{"cfgCutRapidityMax", 0.5, "Maximum rapidity for tracks"};
   Configurable<bool> cfgCutOnReconstructedRapidity{"cfgCutOnReconstructedRapidity", false, "Cut on reconstructed rapidity"};
@@ -208,7 +210,7 @@ struct nucleiSpectra {
   float mBz = 0.f;
 
   Filter collisionFilter = nabs(aod::collision::posZ) < cfgCutVertex;
-  Filter trackFilter = nabs(aod::track::eta) < cfgCutEta;
+  Filter trackFilter = nabs(aod::track::eta) < cfgCutEta && aod::track::tpcInnerParam > cfgCutTpcMom;
 
   using TrackCandidates = soa::Filtered<soa::Join<aod::TracksIU, aod::TracksCovIU, aod::TracksExtra, aod::TOFSignal, aod::TOFEvTime>>;
 
@@ -292,6 +294,7 @@ struct nucleiSpectra {
         nuclei::hTOFmassEta[iS][iC] = spectra.add<TH3>(fmt::format("h{}TOFmassEta{}", nuclei::matter[iC], nuclei::names[iS]).data(), fmt::format("TOF mass - {}  PDG mass", nuclei::names[iS]).data(), HistType::kTH3D, {etaAxis, ptAxes[iS], tofMassAxis});
         nuclei::hMomRes[iS][iC] = spectra.add<TH3>(fmt::format("h{}MomRes{}", nuclei::matter[iC], nuclei::names[iS]).data(), fmt::format("Momentum resolution {}", nuclei::names[iS]).data(), HistType::kTH3D, {centAxis, ptAxes[iS], ptResAxis});
         nuclei::hGenNuclei[iS][iC] = spectra.add<TH2>(fmt::format("h{}Gen{}", nuclei::matter[iC], nuclei::names[iS]).data(), fmt::format("Generated {}", nuclei::names[iS]).data(), HistType::kTH2D, {centAxis, ptAxes[iS]});
+        nuclei::hDeltaP[iC][iS] = spectra.add<TH2>(fmt::format("hDeltaP{}_{}", nuclei::matter[iC], nuclei::names[iS]).data(), fmt::format("#Delta#it{{p}}/#it{{p}} {} {}", nuclei::matter[iC], nuclei::names[iS]).data(), HistType::kTH2D, {{232, 0.2, 6., "#it{{p}} (GeV/#it{{c}})"}, {200, -1.0, 1.0, "(#it{{p}}_{{IU}} - #it{{p}}_{{TPC}}) / #it{{p}}"}});
       }
     }
 
@@ -355,6 +358,9 @@ struct nucleiSpectra {
         nSigma[0][iS] = static_cast<float>((track.tpcSignal() - expBethe) / expSigma);
         selectedTPC[iS] = (nSigma[0][iS] > nuclei::pidCuts[0][iS][0] && nSigma[0][iS] < nuclei::pidCuts[0][iS][1]);
         goodToAnalyse = goodToAnalyse || selectedTPC[iS];
+        if (selectedTPC[iS] && track.p() > 0.2) {
+          nuclei::hDeltaP[iC][iS]->Fill(track.p(), 1 - track.tpcInnerParam() / track.p());
+        }
       }
       if (!goodToAnalyse) {
         continue;
@@ -462,7 +468,7 @@ struct nucleiSpectra {
       nucleiTableMC(c.pt, c.eta, c.phi, c.tpcInnerParam, c.beta, c.zVertex, c.DCAxy, c.DCAz, c.TPCsignal, c.ITSchi2, c.TPCchi2, c.flags, c.TPCfindableCls, c.TPCcrossedRows, c.ITSclsMap, c.TPCnCls, particle.pt(), particle.eta(), particle.phi(), particle.pdgCode());
       for (int iS{0}; iS < nuclei::species; ++iS) {
         if (std::abs(particle.pdgCode()) == nuclei::codes[iS]) {
-          nuclei::hMomRes[iS][particle.pdgCode() < 0]->Fill(1., std::abs(c.pt), 1. - std::abs(c.pt) / particle.pt());
+          nuclei::hMomRes[iS][particle.pdgCode() < 0]->Fill(1., std::abs(c.pt * nuclei::charges[iS]), 1. - std::abs(c.pt * nuclei::charges[iS]) / particle.pt());
           break;
         }
       }

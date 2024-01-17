@@ -12,6 +12,7 @@
 /// \file correlatorDplusHadrons.cxx
 /// \author Shyam Kumar <shyam.kumar@cern.ch>
 
+#include "CommonConstants/PhysicsConstants.h"
 #include "Framework/AnalysisTask.h"
 #include "Framework/HistogramRegistry.h"
 #include "Framework/runDataProcessing.h"
@@ -29,6 +30,7 @@
 
 using namespace o2;
 using namespace o2::analysis;
+using namespace o2::constants::physics;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
@@ -130,10 +132,10 @@ struct HfDplusSelection {
   {
     bool isDplusFound = 0;
     for (const auto& particle1 : mcParticles) {
-      if (std::abs(particle1.pdgCode()) != pdg::Code::kDPlus) {
+      if (std::abs(particle1.pdgCode()) != Pdg::kDPlus) {
         continue;
       }
-      double yD = RecoDecay::y(std::array{particle1.px(), particle1.py(), particle1.pz()}, o2::analysis::pdg::MassDPlus);
+      double yD = RecoDecay::y(std::array{particle1.px(), particle1.py(), particle1.pz()}, MassDPlus);
       if (yCandMax >= 0. && std::abs(yD) > yCandMax) {
         continue;
       }
@@ -152,6 +154,8 @@ struct HfDplusSelection {
 struct HfCorrelatorDplusHadrons {
   Produces<aod::DplusHadronPair> entryDplusHadronPair;
   Produces<aod::DplusHadronRecoInfo> entryDplusHadronRecoInfo;
+  Produces<aod::Dplus> entryDplus;
+  Produces<aod::Hadron> entryHadron;
 
   Configurable<int> selectionFlagDplus{"selectionFlagDplus", 7, "Selection Flag for Dplus"}; // 7 corresponds to topo+PID cuts
   Configurable<int> applyEfficiency{"applyEfficiency", 1, "Flag for applying D-meson efficiency weights"};
@@ -236,8 +240,11 @@ struct HfCorrelatorDplusHadrons {
   /// Dplus-hadron correlation pair builder - for real data and data-like analysis (i.e. reco-level w/o matching request via MC truth)
   void processData(soa::Join<aod::Collisions, aod::Mults>::iterator const& collision,
                    aod::TracksWDca const& tracks,
-                   soa::Join<aod::HfCand3Prong, aod::HfSelDplusToPiKPi> const& candidates)
+                   soa::Join<aod::HfCand3Prong, aod::HfSelDplusToPiKPi> const& candidates, aod::BCsWithTimestamps const&)
   {
+    auto bc = collision.bc_as<aod::BCsWithTimestamps>();
+    int gCollisionId = collision.globalIndex();
+    int64_t timeStamp = bc.timestamp();
     if (selectedDplusCandidates.size() > 0) {
       int poolBin = corrBinning.getBin(std::make_tuple(collision.posZ(), collision.multFV0M()));
       int nTracks = 0;
@@ -261,7 +268,7 @@ struct HfCorrelatorDplusHadrons {
       registry.fill(HIST("hMultiplicity"), nTracks);
 
       auto selectedDplusCandidatesGrouped = selectedDplusCandidates->sliceByCached(aod::hf_cand::collisionId, collision.globalIndex(), cache);
-
+      int cntDplus = 0;
       for (const auto& candidate1 : selectedDplusCandidatesGrouped) {
         if (yCandMax >= 0. && std::abs(hfHelper.yDplus(candidate1)) > yCandMax) {
           continue;
@@ -292,6 +299,7 @@ struct HfCorrelatorDplusHadrons {
         registry.fill(HIST("hY"), hfHelper.yDplus(candidate1));
         registry.fill(HIST("hSelectionStatus"), candidate1.isSelDplusToPiKPi());
         registry.fill(HIST("hDplusBin"), poolBin);
+        entryDplus(candidate1.phi(), candidate1.eta(), candidate1.pt(), hfHelper.invMassDplusToPiKPi(candidate1), poolBin, gCollisionId, timeStamp);
         // Dplus-Hadron correlation dedicated section
         // if the candidate is a Dplus, search for Hadrons and evaluate correlations
         for (const auto& track : tracks) {
@@ -313,8 +321,11 @@ struct HfCorrelatorDplusHadrons {
                                candidate1.pt(),
                                track.pt(), poolBin);
           entryDplusHadronRecoInfo(hfHelper.invMassDplusToPiKPi(candidate1), 0);
+          if (cntDplus == 0)
+            entryHadron(track.phi(), track.eta(), track.pt(), poolBin, gCollisionId, timeStamp);
         } // Hadron Tracks loop
-      }   // end outer Dplus loop
+        cntDplus++;
+      } // end outer Dplus loop
       registry.fill(HIST("hZvtx"), collision.posZ());
       registry.fill(HIST("hMultV0M"), collision.multFV0M());
     }
@@ -441,10 +452,10 @@ struct HfCorrelatorDplusHadrons {
     // MC gen level
     for (const auto& particle1 : mcParticles) {
       // check if the particle is Dplus  (for general plot filling and selection, so both cases are fine) - NOTE: decay channel is not probed!
-      if (std::abs(particle1.pdgCode()) != pdg::Code::kDPlus) {
+      if (std::abs(particle1.pdgCode()) != Pdg::kDPlus) {
         continue;
       }
-      double yD = RecoDecay::y(std::array{particle1.px(), particle1.py(), particle1.pz()}, o2::analysis::pdg::MassDPlus);
+      double yD = RecoDecay::y(std::array{particle1.px(), particle1.py(), particle1.pz()}, MassDPlus);
       if (yCandMax >= 0. && std::abs(yD) > yCandMax) {
         continue;
       }
@@ -458,7 +469,7 @@ struct HfCorrelatorDplusHadrons {
       counterDplusHadron++;
       // Dplus Hadron correlation dedicated section
       // if it's a Dplus particle, search for Hadron and evaluate correlations
-      if (std::abs(particle1.pdgCode()) != pdg::Code::kDPlus) { // just checking the particle PDG, not the decay channel (differently from Reco: you have a BR factor btw such levels!)
+      if (std::abs(particle1.pdgCode()) != Pdg::kDPlus) { // just checking the particle PDG, not the decay channel (differently from Reco: you have a BR factor btw such levels!)
         continue;
       }
       registry.fill(HIST("hcountDplustriggersMCGen"), 0, particle1.pt()); // to count trigger Dplus for normalisation)
@@ -567,11 +578,11 @@ struct HfCorrelatorDplusHadrons {
       for (const auto& [t1, t2] : o2::soa::combinations(o2::soa::CombinationsFullIndexPolicy(tracks1, tracks2))) {
 
         // Check track t1 is Dplus
-        if (std::abs(t1.pdgCode()) != pdg::Code::kDPlus) {
+        if (std::abs(t1.pdgCode()) != Pdg::kDPlus) {
           continue;
         }
 
-        double yD = RecoDecay::y(std::array{t1.px(), t1.py(), t1.pz()}, o2::analysis::pdg::MassDPlus);
+        double yD = RecoDecay::y(std::array{t1.px(), t1.py(), t1.pz()}, MassDPlus);
         if (yCandMax >= 0. && std::abs(yD) > yCandMax) {
           continue;
         }

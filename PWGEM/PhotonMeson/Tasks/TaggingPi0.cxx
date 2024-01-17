@@ -50,6 +50,9 @@ using MyV0Photon = MyV0Photons::iterator;
 using MyDalitzEEs = soa::Join<aod::DalitzEEs, aod::DalitzEEEMReducedEventIds>;
 using MyDalitzEE = MyDalitzEEs::iterator;
 
+using MyPrimaryElectrons = soa::Join<aod::EMPrimaryElectrons, aod::EMPrimaryElectronEMReducedEventIds, aod::EMPrimaryElectronsPrefilterBit>;
+using MyPrimaryElectron = MyPrimaryElectrons::iterator;
+
 struct TaggingPi0 {
 
   // Configurable<float> maxY{"maxY", 0.9, "maximum rapidity for reconstructed particles"};
@@ -298,7 +301,7 @@ struct TaggingPi0 {
     } else if constexpr (pairtype == PairType::kPCMEMC) {
       is_selected_pair = o2::aod::photonpair::IsSelectedPair<aod::V0Legs, aod::SkimEMCMTs>(g1, g2, cut1, cut2);
     } else if constexpr (pairtype == PairType::kPCMDalitzEE) {
-      is_selected_pair = o2::aod::photonpair::IsSelectedPair<aod::V0Legs, aod::EMPrimaryElectrons>(g1, g2, cut1, cut2);
+      is_selected_pair = o2::aod::photonpair::IsSelectedPair<aod::V0Legs, MyPrimaryElectrons>(g1, g2, cut1, cut2);
     } else {
       is_selected_pair = true;
     }
@@ -398,8 +401,8 @@ struct TaggingPi0 {
     // LOGF(info, "Number of collisions after filtering: %d", collisions.size());
     for (auto& [collision1, collision2] : soa::selfCombinations(colBinning, ndepth, -1, collisions, collisions)) { // internally, CombinationsStrictlyUpperIndexPolicy(collisions, collisions) is called.
 
-      // LOGF(info, "Mixed event collisionId: (%d, %d) , counter = %d, ngpcm: (%d, %d), ngphos: (%d, %d), ngemc: (%d, %d)",
-      //     collision1.collisionId(), collision2.collisionId(), nev, collision1.ngpcm(), collision2.ngpcm(), collision1.ngphos(), collision2.ngphos(), collision1.ngemc(), collision2.ngemc());
+      // LOGF(info, "Mixed event globalIndex: (%d, %d) , counter = %d, ngpcm: (%d, %d), ngphos: (%d, %d), ngemc: (%d, %d)",
+      //     collision1.globalIndex(), collision2.globalIndex(), nev, collision1.ngpcm(), collision2.ngpcm(), collision1.ngphos(), collision2.ngphos(), collision1.ngemc(), collision2.ngemc());
 
       auto photons_coll1 = photons1.sliceBy(perCollision1, collision1.globalIndex());
       auto photons_coll2 = photons2.sliceBy(perCollision2, collision2.globalIndex());
@@ -410,7 +413,7 @@ struct TaggingPi0 {
         for (auto& cut2 : cuts2) {
           for (auto& paircut : paircuts) {
             for (auto& [g1, g2] : combinations(soa::CombinationsFullIndexPolicy(photons_coll1, photons_coll2))) {
-              // LOGF(info, "Mixed event photon pair: (%d, %d) from events (%d, %d), photon event: (%d, %d)", g1.index(), g2.index(), collision1.index(), collision2.index(), g1.collisionId(), g2.collisionId());
+              // LOGF(info, "Mixed event photon pair: (%d, %d) from events (%d, %d), photon event: (%d, %d)", g1.index(), g2.index(), collision1.index(), collision2.index(), g1.globalIndex(), g2.globalIndex());
 
               if ((pairtype == PairType::kPCMPCM || pairtype == PairType::kPHOSPHOS || pairtype == PairType::kEMCEMC) && (TString(cut1.GetName()) != TString(cut2.GetName()))) {
                 continue;
@@ -428,8 +431,8 @@ struct TaggingPi0 {
                 v2.SetM(g2.mass());
                 auto pos_sv = g1.template posTrack_as<aod::V0Legs>();
                 auto ele_sv = g1.template negTrack_as<aod::V0Legs>();
-                auto pos_pv = g2.template posTrack_as<aod::EMPrimaryElectrons>();
-                auto ele_pv = g2.template negTrack_as<aod::EMPrimaryElectrons>();
+                auto pos_pv = g2.template posTrack_as<MyPrimaryElectrons>();
+                auto ele_pv = g2.template negTrack_as<MyPrimaryElectrons>();
                 if (pos_sv.trackId() == pos_pv.trackId() || ele_sv.trackId() == ele_pv.trackId()) {
                   continue;
                 }
@@ -464,7 +467,7 @@ struct TaggingPi0 {
     SameEventPairing<PairType::kPCMPCMibw>(collisions, v0photons, v0photons, perCollision_pcm, perCollision_pcm, fPCMCuts, fPCMibwCuts, fPairCuts, legs, nullptr);
     MixedEventPairing<PairType::kPCMPCMibw>(filtered_collisions, v0photons, v0photons, perCollision_pcm, perCollision_pcm, fPCMCuts, fPCMibwCuts, fPairCuts, legs, nullptr);
   }
-  void processPCMDalitz(MyCollisions const& collisions, MyFilteredCollisions const& filtered_collisions, MyV0Photons const& v0photons, aod::V0Legs const& legs, MyFilteredDalitzEEs const& dielectrons, aod::EMPrimaryElectrons const& emprimaryelectrons)
+  void processPCMDalitz(MyCollisions const& collisions, MyFilteredCollisions const& filtered_collisions, MyV0Photons const& v0photons, aod::V0Legs const& legs, MyFilteredDalitzEEs const& dielectrons, MyPrimaryElectrons const& emprimaryelectrons)
   {
     SameEventPairing<PairType::kPCMDalitzEE>(collisions, v0photons, dielectrons, perCollision_pcm, perCollision_dalitz, fPCMCuts, fDalitzEECuts, fPairCuts, legs, emprimaryelectrons);
     MixedEventPairing<PairType::kPCMDalitzEE>(filtered_collisions, v0photons, dielectrons, perCollision_pcm, perCollision_dalitz, fPCMCuts, fDalitzEECuts, fPairCuts, legs, emprimaryelectrons);

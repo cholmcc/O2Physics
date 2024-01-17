@@ -142,8 +142,6 @@ struct strangeness_tutorial {
   void processRecMC(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels>>::iterator const& collision,
                     soa::Filtered<soa::Join<aod::CascDatas, aod::McCascLabels>> const& Cascades,
                     soa::Filtered<soa::Join<aod::V0Datas, aod::McV0Labels>> const& V0s,
-                    aod::V0Datas const&, // it's needed to access the full table of V0s (not the filtered one) to make sure all the V0s related to cascades are present
-                    aod::V0sLinked const&,
                     DaughterTracks const&,
                     aod::McParticles const&)
   {
@@ -158,7 +156,7 @@ struct strangeness_tutorial {
       rKzeroShort.fill(HIST("hMassK0Short"), v0.mK0Short());
 
       // Cut on dynamic columns
-      if (v0.v0cosPA(collision.posX(), collision.posY(), collision.posZ()) < v0setting_cospa)
+      if (v0.v0cosPA() < v0setting_cospa)
         continue;
       if (v0.v0radius() < v0setting_radius)
         continue;
@@ -174,7 +172,7 @@ struct strangeness_tutorial {
       rKzeroShort.fill(HIST("hPtK0ShortSelected"), v0.pt());
 
       rKzeroShort.fill(HIST("hDCAV0Daughters"), v0.dcaV0daughters());
-      rKzeroShort.fill(HIST("hV0CosPA"), v0.v0cosPA(collision.posX(), collision.posY(), collision.posZ()));
+      rKzeroShort.fill(HIST("hV0CosPA"), v0.v0cosPA());
 
       // Filling the PID of the V0 daughters in the region of the K0 peak
       if (0.45 < v0.mK0Short() && v0.mK0Short() < 0.55) {
@@ -202,15 +200,9 @@ struct strangeness_tutorial {
 
     // Cascades
     for (const auto& casc : Cascades) {
-      const auto& v0index = casc.v0_as<aod::V0sLinked>();
-      if (!(v0index.has_v0Data())) {
-        continue; // skip those cascades for which V0 doesn't exist
-      }
-
-      const auto& v0Casc = v0index.v0Data(); // de-reference index to correct v0data in case it exists
       const auto& bachDaughterTrackCasc = casc.bachelor_as<DaughterTracks>();
-      const auto& posDaughterTrackCasc = v0Casc.posTrack_as<DaughterTracks>();
-      const auto& negDaughterTrackCasc = v0Casc.negTrack_as<DaughterTracks>();
+      const auto& posDaughterTrackCasc = casc.posTrack_as<DaughterTracks>();
+      const auto& negDaughterTrackCasc = casc.negTrack_as<DaughterTracks>();
 
       rXi.fill(HIST("hMassXi"), casc.mXi());
 

@@ -270,12 +270,18 @@ DECLARE_SOA_COLUMN(FilteringFlags, filteringFlags, uint8_t); //!
 DECLARE_SOA_COLUMN(Pt, pt, float);   //!
 DECLARE_SOA_COLUMN(Eta, eta, float); //!
 DECLARE_SOA_COLUMN(Phi, phi, float); //!
+DECLARE_SOA_COLUMN(Sign, sign, int); //!
+DECLARE_SOA_COLUMN(MftClusterSizesAndTrackFlags, mftClusterSizesAndTrackFlags, uint64_t); //!
 } // namespace reducedmft
 
 // MFT track kinematics
 DECLARE_SOA_TABLE(ReducedMFTTracks, "AOD", "RMFTTR", //!
                   o2::soa::Index<>, reducedmft::ReducedEventId, reducedmft::FilteringFlags,
                   reducedmft::Pt, reducedmft::Eta, reducedmft::Phi);
+
+// MFT tracks extra info (cluster size, sign)
+DECLARE_SOA_TABLE(ReducedMFTTracksExtra, "AOD", "RMFTTREXTRA", //!
+                  reducedmft::MftClusterSizesAndTrackFlags, reducedmft::Sign);
 
 // iterator
 using ReducedMFTTrack = ReducedMFTTracks::iterator;
@@ -312,7 +318,7 @@ DECLARE_SOA_DYNAMIC_COLUMN(MIDBoardCh3, midBoardCh3, //!
 DECLARE_SOA_DYNAMIC_COLUMN(MIDBoardCh4, midBoardCh4, //!
                            [](uint32_t midBoards) -> int { return static_cast<int>((midBoards >> 24) & 0xFF); });
 DECLARE_SOA_SELF_INDEX_COLUMN_FULL(MCHTrack, matchMCHTrack, int, "RTMuons_MatchMCHTrack");
-DECLARE_SOA_INDEX_COLUMN(ReducedMFTTrack, matchMFTTrack); //!  matching index pointing to the ReducedMFTTrack table if filled
+DECLARE_SOA_SELF_INDEX_COLUMN_FULL(ReducedMFTTrack, matchMFTTrack, int, "RTMuons_MatchMFTTrack"); //!  matching index pointing to the ReducedMFTTrack table if filled
 } // namespace reducedmuon
 
 // Muon track kinematics
@@ -514,7 +520,11 @@ DECLARE_SOA_TABLE(DimuonsAll, "AOD", "RTDIMUONALL", //!
                   dilepton_track_index::PtMC2, dilepton_track_index::EtaMC2, dilepton_track_index::PhiMC2, dilepton_track_index::EMC2,
                   dilepton_track_index::Vx1, dilepton_track_index::Vy1, dilepton_track_index::Vz1, dilepton_track_index::Vt1,
                   dilepton_track_index::Vx2, dilepton_track_index::Vy2, dilepton_track_index::Vz2, dilepton_track_index::Vt2,
-                  dilepton_track_index::IsAmbig1, dilepton_track_index::IsAmbig2);
+                  dilepton_track_index::IsAmbig1, dilepton_track_index::IsAmbig2,
+                  reducedpair::U2Q2,
+                  reducedpair::U3Q3,
+                  reducedpair::Cos2DeltaPhi,
+                  reducedpair::Cos3DeltaPhi);
 
 using Dilepton = Dileptons::iterator;
 using DileptonExtra = DileptonsExtra::iterator;

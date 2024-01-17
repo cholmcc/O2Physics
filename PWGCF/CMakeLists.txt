@@ -22,4 +22,5 @@ add_subdirectory(TableProducer)
 add_subdirectory(Tutorial)
 add_subdirectory(TwoParticleCorrelations)
 add_subdirectory(JCorran)
-
+add_subdirectory(Femto3D)
+add_subdirectory(EbyEFluctuations)

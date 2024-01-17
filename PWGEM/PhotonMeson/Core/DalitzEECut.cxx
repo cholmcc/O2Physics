@@ -18,7 +18,7 @@
 
 ClassImp(DalitzEECut);
 
-const char* DalitzEECut::mCutNames[static_cast<int>(DalitzEECut::DalitzEECuts::kNCuts)] = {"Mee", "PairPtRange", "PairEtaRange", "PhivPair", "TrackPtRange", "TrackEtaRange", "TPCNCls", "TPCCrossedRows", "TPCCrossedRowsOverNCls", "TPCChi2NDF", "TPCNsigmaEl", "TPCNsigmaMu", "TPCNsigmaPi", "TPCNsigmaKa", "TPCNsigmaPr", "TOFNsigmaEl", "TOFNsigmaMu", "TOFNsigmaPi", "TOFNsigmaKa", "TOFNsigmaPr", "DCAxy", "DCAz", "ITSNCls", "ITSChi2NDF"};
+const char* DalitzEECut::mCutNames[static_cast<int>(DalitzEECut::DalitzEECuts::kNCuts)] = {"Mee", "PairPtRange", "PairEtaRange", "PhivPair", "TrackPtRange", "TrackEtaRange", "TPCNCls", "TPCCrossedRows", "TPCCrossedRowsOverNCls", "TPCChi2NDF", "TPCNsigmaEl", "TPCNsigmaMu", "TPCNsigmaPi", "TPCNsigmaKa", "TPCNsigmaPr", "TOFNsigmaEl", "TOFNsigmaMu", "TOFNsigmaPi", "TOFNsigmaKa", "TOFNsigmaPr", "DCA3Dsigma", "DCAxy", "DCAz", "ITSNCls", "ITSChi2NDF"};
 
 void DalitzEECut::SetPairPtRange(float minPt, float maxPt)
 {
@@ -89,7 +89,12 @@ void DalitzEECut::SetChi2PerClusterITS(float min, float max)
   mMaxChi2PerClusterITS = max;
   LOG(info) << "DalitzEE Cut, set chi2 per cluster ITS range: " << mMinChi2PerClusterITS << " - " << mMaxChi2PerClusterITS;
 }
-
+void DalitzEECut::SetDca3DRange(float min, float max)
+{
+  mMinDca3D = min;
+  mMaxDca3D = max;
+  LOG(info) << "DalitzEE Cut, set DCA 3D range in sigma: " << mMinDca3D << " - " << mMaxDca3D;
+}
 void DalitzEECut::SetMaxDcaXY(float maxDcaXY)
 {
   mMaxDcaXY = maxDcaXY;
@@ -105,6 +110,11 @@ void DalitzEECut::SetMaxDcaXYPtDep(std::function<float(float)> ptDepCut)
 {
   mMaxDcaXYPtDep = ptDepCut;
   LOG(info) << "DalitzEE Cut, set max DCA xy pt dep: " << mMaxDcaXYPtDep(1.0);
+}
+void DalitzEECut::ApplyPrefilter(bool flag)
+{
+  mApplyPF = flag;
+  LOG(info) << "DalitzEE Cut, apply prefilter: " << mApplyPF;
 }
 
 void DalitzEECut::SetPIDScheme(PIDSchemes scheme)
@@ -192,6 +202,11 @@ void DalitzEECut::SetTOFNsigmaPrRange(float min, float max)
   mMinTOFNsigmaPr = min;
   mMaxTOFNsigmaPr = max;
   LOG(info) << "DalitzEE selection, set TOF n sigma Pr range: " << mMinTOFNsigmaPr << " - " << mMaxTOFNsigmaPr;
+}
+void DalitzEECut::SetMaxPinMuonTPConly(float max)
+{
+  mMaxPinMuonTPConly = max;
+  LOG(info) << "DalitzEE Cut, set max pin for Muon ID with TPC only: " << mMaxPinMuonTPConly;
 }
 
 void DalitzEECut::print() const

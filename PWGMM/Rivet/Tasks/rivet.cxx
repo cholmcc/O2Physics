@@ -221,6 +221,18 @@ struct Task3 {
 };
 
 //--------------------------------------------------------------------
+using o2::framework::ConfigParamSpec;
+
+//--------------------------------------------------------------------
+void customize(std::vector<ConfigParamSpec>& workflowOptions)
+{
+  ConfigParamSpec optionHepMCAux{"hepmc-aux", //
+    VariantType::Bool, false, //
+    {"Also process auxiliary HepMC tables"}};
+  workflowOptions.push_back(optionHepMCAux);
+}
+
+//--------------------------------------------------------------------
 using WorkflowSpec = o2::framework::WorkflowSpec;
 using TaskName = o2::framework::TaskName;
 using DataProcessorSpec = o2::framework::DataProcessorSpec;
@@ -233,8 +245,11 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfg)
   // Task1: One entry: header, tracks, auxiliary
   // Task2: One entry: header, tracks
   // Task3: Two entry: header, tracks, and auxiliary
+  if (cfg.options().get<bool>("hepmc-aux")) 
+    return WorkflowSpec{
+      adaptAnalysisTask<Task1>(cfg, TaskName{"o2-analysis-mm-rivet"})};
   return WorkflowSpec{
-    adaptAnalysisTask<Task1>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+    adaptAnalysisTask<Task2>(cfg, TaskName{"o2-analysis-mm-rivet"})};
 }
 //
 // EOF

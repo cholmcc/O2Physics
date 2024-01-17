@@ -1,8 +1,35 @@
 #!/usr/bin/env python
 #
+#  Copyright (C) 2023  Christian Holm Christensen
 #
-"""Module to read in HepMC files"""
+#  This program is free software: you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License
+#  as published by the Free Software Foundation, either version 3 of
+#  the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see
+#  <https://www.gnu.org/licenses/>.
+#
+"""Module to read in HepMC files
 
+This supports both
+
+- `HepMC::Asciiv3-START_EVENT_LISTING`, from HepMC3, and
+- `HepMC::IO_GenEvent-START_EVENT_LISTING`, from HepMC2
+
+"""
+
+# ====================================================================
+def make_iter(c):
+    if isinstance(c,list):
+        return enumerate(c)
+    return c.items()
 
 # ====================================================================
 class Reader:
@@ -28,29 +55,29 @@ class Reader:
     def attributes(self):
         """Get dictionary of run attributes (possibly empty)"""
         return self._attributes
-
+    
     # ----------------------------------------------------------------
     @property
     def weights(self):
         """Get dictionary of run weight names (possibly None)"""
         return self._weights
-
+    
     # ----------------------------------------------------------------
     def read(self,stream,lineno,check=True):
-        """Read a single event from stream
+        """Read a single event from stream 
 
         Parameters
         ----------
-        stream : io.TextIOBase
-             Input stream
-        lineno : int
-             Line number
-
+        stream : io.TextIOBase 
+             Input stream 
+        lineno : int 
+             Line number 
+        
         Returns
         -------
-        lineno : int
-            Line number
-        event : dict
+        lineno : int 
+            Line number 
+        event : dict 
             Read event or None
         """
         if self._version is None:
@@ -64,9 +91,9 @@ class Reader:
 
     # ----------------------------------------------------------------
     def _tokenize(self,stream,lineno):
-        """Read a line from the input stream and tokenize it.
+        """Read a line from the input stream and tokenize it. 
 
-        Empty lines are skipped over.
+        Empty lines are skipped over. 
 
         If a line contains, `HepMC::Asciiv3-END_EVENT_LISTING`, then
         signal end of the input.
@@ -76,15 +103,15 @@ class Reader:
 
         Parameters
         ----------
-        stream : io.TextIOBase
-             Input stream
-        lineno : int
-             Line number
-
+        stream : io.TextIOBase 
+             Input stream 
+        lineno : int 
+             Line number 
+        
         Returns
         -------
-        lineno : int
-            Line number
+        lineno : int 
+            Line number 
         tokens : list of str
             Tokens
 
@@ -97,13 +124,17 @@ class Reader:
             if not line:
                 print(f'In line {lineno} stream ends, but before end mark!')
                 break
-
+            
             # print(f'{lineno:4d} "{line}"')
             line       =  line.strip()
             if line == '':
                 continue
 
             if line == 'HepMC::Asciiv3-END_EVENT_LISTING':
+                lineno = self._unread(stream,lineno)
+                break
+
+            if line == 'HepMC::IO_GenEvent-END_EVENT_LISTING':
                 lineno = self._unread(stream,lineno)
                 break
 
@@ -114,61 +145,61 @@ class Reader:
 
     # ----------------------------------------------------------------
     def _unread(self,stream,lineno):
-        """Seek back to start of previously read line
+        """Seek back to start of previously read line 
 
-
+        
         Parameters
         ----------
-        stream : io.TextIOBase
-             Input stream
-        lineno : int
-             Line number
-
+        stream : io.TextIOBase 
+             Input stream 
+        lineno : int 
+             Line number 
+        
         Returns
         -------
-        lineno : int
-            Line number
+        lineno : int 
+            Line number 
         """
         if self._last is None:
             return lineno
-
+        
         stream.seek(self._last)
         lineno -= 1
 
         return lineno
-
+        
 
     # ----------------------------------------------------------------
     def _assert_no_garbage(self,lineno,what,*args):
-        """Check that there's no stuff at the end of the line
-
+        """Check that there's no stuff at the end of the line 
+        
         Parameters
         ----------
-        lineno : int
-            Line number
-        what : str
-            What we are parsing
-        args : tuple
-            Remaining arguments
+        lineno : int 
+            Line number 
+        what : str 
+            What we are parsing 
+        args : tuple 
+            Remaining arguments 
         """
         assert len(*args) == 0, \
             f'Trailing garbage to {what} in line {lineno}: {len(args)}'
 
     # ----------------------------------------------------------------
     def _parse_header(self,stream,lineno):
-        """Read file header
+        """Read file header 
 
         Parameters
         ----------
-        stream : io.TextIOBase
-             Input stream
-        lineno : int
-             Line number
+        stream : io.TextIOBase 
+             Input stream 
+        lineno : int 
+             Line number 
 
         Returns
         -------
-        lineno : int
-            Line number
+        lineno : int 
+            Line number 
         ready : bool
             True when `HepMC::Asciiv3-START_EVENT_LISTING` is seen
         """
@@ -177,111 +208,176 @@ class Reader:
             self._version = tokens[1]
             return lineno, False
         if tokens[0] == 'HepMC::Asciiv3-START_EVENT_LISTING':
+            self._fmt = 3
+            return lineno, True
+        if tokens[0] == 'HepMC::IO_GenEvent-START_EVENT_LISTING':
+            self._fmt = 2
             return lineno, True
 
         raise RuntimeError(f'Unknown header: {tokens}')
-
+        
     # ----------------------------------------------------------------
     def _parse_event(self,stream,lineno=0,check=True):
-        """Read and event
+        """Read and event 
 
         Parameters
         ----------
-        stream : io.TextIOBase
-             Input stream
-        lineno : int
-             Line number
-
+        stream : io.TextIOBase 
+             Input stream 
+        lineno : int 
+             Line number 
+        
         Returns
         -------
-        lineno : int
-            Line number
-        event : dict
+        lineno : int 
+            Line number 
+        event : dict 
             Read event or None
         """
         self._event = None
         self._last  = None
 
-        while True:
-            lineno, tokens = self._tokenize(stream, lineno)
-            if not tokens:
-                break
+        lineno = 0
 
-            if   tokens[0] == 'A': self._parse_attribute(lineno,*tokens[1:])
-            elif tokens[0] == 'T': self._parse_tool     (lineno,*tokens[1:])
-            elif tokens[0] == 'W': self._parse_weights  (lineno,*tokens[1:])
-            elif tokens[0] == 'E':
-                self._parse_info(lineno,*tokens[1:])
-                break
-            else:
-                raise RuntimeError(f'Unexpected line at line {lineno}: '+
-                                   f'got "{tokens}"')
-
-        if self._event is None:
-            return lineno,None
-
-        while stream.readable():
-            lineno, tokens = self._tokenize(stream, lineno)
-            if not tokens:
-                break
-
-            if   tokens[0] == 'U': self._parse_units    (lineno,*tokens[1:])
-            elif tokens[0] == 'A': self._parse_attribute(lineno,*tokens[1:])
-            elif tokens[0] == 'P': self._parse_particle (lineno,*tokens[1:])
-            elif tokens[0] == 'V': self._parse_vertex   (lineno,*tokens[1:])
-            elif tokens[0] == 'T': self._parse_tool     (lineno,*tokens[1:])
-            elif tokens[0] == 'W': self._parse_weights  (lineno,*tokens[1:])
-            elif tokens[0] == 'E':
-                lineno = self._unread(stream,lineno)
-                break
-            else:
-                print(f'Ignoring line {lineno}: "{line}"')
-                continue
+        try:
+            while True:
+                lineno, tokens = self._tokenize(stream, lineno)
+                if not tokens:
+                    break
+            
+                if   tokens[0] == 'A': self._parse_attribute(lineno,*tokens[1:])
+                elif tokens[0] == 'T': self._parse_tool     (lineno,*tokens[1:])
+                elif tokens[0] == 'W': self._parse_weights  (lineno,*tokens[1:])
+                elif tokens[0] == 'N': self._parse_names    (lineno,*tokens[1:])
+                elif tokens[0] == 'C': self._parse_xsection (lineno,*tokens[1:])
+                elif tokens[0] == 'F': self._parse_pdf      (lineno,*tokens[1:])
+                elif tokens[0] == 'E':
+                    self._parse_info(lineno,*tokens[1:])
+                    break
+                else:
+                    raise RuntimeError(f'Unexpected line at line {lineno}: '+
+                                       f'got "{tokens}"')
+                
+            if self._event is None:
+                return lineno,None
+            
+            while stream.readable():
+                lineno, tokens = self._tokenize(stream, lineno)
+                if not tokens:
+                    break
+            
+                if   tokens[0] == 'U': self._parse_units    (lineno,*tokens[1:])
+                elif tokens[0] == 'A': self._parse_attribute(lineno,*tokens[1:])
+                elif tokens[0] == 'P': self._parse_particle (lineno,*tokens[1:])
+                elif tokens[0] == 'V': self._parse_vertex   (lineno,*tokens[1:])
+                elif tokens[0] == 'T': self._parse_tool     (lineno,*tokens[1:])
+                elif tokens[0] == 'W': self._parse_weights  (lineno,*tokens[1:])
+                elif tokens[0] == 'N': self._parse_names    (lineno,*tokens[1:])
+                elif tokens[0] == 'C': self._parse_xsection (lineno,*tokens[1:])
+                elif tokens[0] == 'F': self._parse_pdf      (lineno,*tokens[1:])
+                elif tokens[0] == 'E':
+                    lineno = self._unread(stream,lineno)
+                    break
+                else:
+                    print(f'Ignoring line {lineno}: "{" ".join(tokens)}"')
+                    continue
+        except Exception as e:
+            print(f'In line {lineno}: {tokens}\n {str(e)}')
+            raise
 
         return self._flesh_out(lineno,check)
 
     # ----------------------------------------------------------------
-    def _parse_info(self,lineno,number,nvertices,nparticles,*args):
+    def _parse_info(self,lineno,*args):
+        if self._fmt == 2:
+            self._parse_info2(lineno,*args)
+        else:
+            self._parse_info3(lineno,*args)
+            
+    # ----------------------------------------------------------------
+    def _parse_info2(self,lineno,
+                     number,mpi,scale,alpha_qcd,alpha_qed,
+                     signal_id,signal_vertex,nvertices,beam1,beam2,*args):
         """Read header line with the format
+
+            event_number mpi scale alpha_qcd alpha_qed signal_id signal_vertex n_vertices beam1 beam2 [n_random [random]] [n_weights [weights]]
+        
+        Parameters
+        ----------
+        lineno : int 
+             Line number 
+        number : str
+             Event number
+        mpi : str
+             Number of MPIs
+        scale : str
+             Event scale
+        alpha_qcd : str
+             QCD coupling constant
+        alpha_qed : str
+             QED coupliing constant
+        signal_id : str
+             Signal process ID
+        signal_vertex : str
+             Signal vertex
+        nvertices : str
+             Number of vertices
+        beam1 : str
+             ID of beam particle
+        beam2 : str
+             ID of beam particle
+        args : tuple
+             Remaning arguments.  Consist of
+
+                 [n_random [random]] [n_weights [weights]]
+        
+        """
+        self._event = {'number':      int(number),
+                       'nvertices':   int(nvertices),
+                       'nparticles':  0,
+                       'attributes':  {'mpi': mpi,
+                                       'signal': [signal_id,signal_vertex]},
+                       'alphaQCD':    float(alpha_qcd),
+                       'alphaQED':    float(alpha_qed),
+                       'event_scale': float(scale),
+                       'vertices':    {},
+                       'particles':   {}}
+        nrandom = int(args[0]);
+        if nrandom > 0:
+            self._event['attributes']['random_states'] = \
+                [int(s) for s in args[1:nrandom+1]]
+
+        nweights = int(args[nrandom+1])
+        if nweights > 0:
+            self._event['weighs'] = \
+                [float(w) for w in args[nrandom+2:]]
+        
+
+    # ----------------------------------------------------------------
+    def _parse_info3(self,lineno,number,nvertices,nparticles,*args):
+        """Read header line with the format 
 
             event_number n_vertices n_particles [@ [position]
 
         Parameters
         ----------
-        lineno : int
-             Line number
+        lineno : int 
+             Line number 
         number : str
-             Event number
-        nvertices : str
-             Number of vertices
-        nparticles : str
+             Event number 
+        nvertices : str 
+             Number of vertices 
+        nparticles : str 
              Number of particles
-        args : tuple of str
-             Additional arguments
+        args : tuple of str 
+             Additional arguments 
         """
-        nv          = int(nvertices)
-        np          = int(nparticles)
         self._event = {'number':     int(number),
-                       'nvertices':  nv,
-                       'nparticles': np,
-                       'attributes': {}}
-        self._event['vertices']  = [{'id':          -i-1,
-                                     'status':      0,
-                                     'incoming':    [],
-                                     'outgoing':    [],
-                                     'position':    None,
-                                     'attributes':  {},
-                                     'level':       0}
-                                    for i in range(nv)]
-        self._event['particles'] = [{'id':         i,
-                                     'origin':     None,
-                                     'end':        None,
-                                     'status':     0,
-                                     'pid':        0,
-                                     'momentum':   None,
-                                     'mass':       0,
-                                     'attributes': {}}
-                                    for i in range(np)]
+                       'nvertices':  int(nvertices),
+                       'nparticles': int(nparticles),
+                       'attributes': {},
+                       'vertices':   {},
+                       'particles':  {}}
 
         if len(args) <= 0:
             return
@@ -291,140 +387,355 @@ class Reader:
 
     # ----------------------------------------------------------------
     def _parse_units(self,lineno,energy,length,*args):
-        """Read units line with the format
-
-            energy length
+        """Read units line with the format 
+        
+            energy length 
 
         Parameters
         ----------
-        lineno : int
-             Line number
-        energy : str
-             Energy unit
-        length : str
-             Length unit
-        args : tuple of str
+        lineno : int 
+             Line number 
+        energy : str 
+             Energy unit 
+        length : str 
+             Length unit 
+        args : tuple of str 
              Additional arguments (should be empty)
         """
         self._assert_no_garbage(lineno, 'units', args)
-
+        
         self._event['units'] = { 'energy': energy, 'length': length }
 
 
     # ----------------------------------------------------------------
-    def _parse_vertex(self,lineno,sid,status,*args):
+    def _make_vertex(self,
+                     vid=0,
+                     status=0,
+                     position=None,
+                     incoming=None,
+                     outgoing=None,
+                     attributes=None,
+                     level=0):
+        '''Create a dictionary of a vertex
+
+        Parameters
+        ----------
+        vid : int
+            Vertex identifier (must be negative)
+        status : int
+            Vertex status
+        position : list of 4 floats
+            4-position (x,y,z,t)
+        incoming : list
+            List of incoming particle identifiers
+        outgoing : list
+            List of outgoung particle identifiers
+        attributes : dict
+            Dictionary of attributes
+        level : int
+            Level of vertex
+
+        Returns
+        -------
+        vertex : dict
+            Dictionary of vertex
+        '''
+        assert vid not in self._event['vertices'], \
+            f'Vertex {vid} already in event'
+        assert vid <= 0, \
+            f'Invalid vertex ID={vid}'
+        self._event['vertices'][vid] = {
+            'id':         vid,
+            'status':     status,
+            'position':   [0,0,0,0] if position is None else position,
+            'incoming':   [] if incoming is None else [],
+            'outgoing':   [] if outgoing is None else outgoing,
+            'attributes': {} if attributes is None else attributes,
+            'level':      level}
+        return self._event['vertices'][vid]
+
+    # ----------------------------------------------------------------
+    def _parse_vertex(self,lineno,*args):
+        if self._fmt == 2:
+            self._parse_vertex2(lineno, *args)
+        else:
+            self._parse_vertex3(lineno,*args)
+            
+    # ----------------------------------------------------------------
+    def _parse_vertex2(self,lineno,sid,status,x,y,z,t,n_out,n_weights,*args):
         """Read in vertex with format
 
-            id status [pin-list] [@ x y z t]
-
-        where `pin-list` and coordinates are optional. Here `pin-list`
-        is a square-bracket enclosed comma separated list of
-        incoming particle IDs
+            id status x y z t n_out n_weights [weights]*n_weights
 
         Parameters
         ----------
         lineno : int
-             Line number
+            Line Number
         sid : str
-             Vertex id
+            Vertex ID
         status : str
-             Vertex status
-        args : tuple of str
+            Status code
+        x : str
+            X position
+        y : str
+            Y position
+        z : str
+            Z position
+        t : str
+            Time
+        n_out : str
+            Number of particles out
+        n_weights : str
+            Number of weights
+        """
+        vid     = int(sid)
+        st      = int(status)
+        pos     = [float(x),float(y),float(z),float(t)]
+        np      = int(n_out)
+        nw      = int(n_weights)
+        w       = {} if nw < 1 else {'weights':[float(w) for w in args]}
+        v       = self._make_vertex(vid=vid,status=st,position=pos,
+                                    attributes=w)
+
+        self._last_vid = vid
+        
+    # ----------------------------------------------------------------
+    def _parse_vertex3(self,lineno,sid,status,*args):
+        """Read in vertex with format 
+
+            id status [pin-list] [@ x y z t]
+
+        where `pin-list` and coordinates are optional. Here `pin-list` 
+        is a square-bracket enclosed comma separated list of 
+        incoming particle IDs 
+
+        Parameters
+        ----------
+        lineno : int 
+             Line number 
+        sid : str 
+             Vertex id 
+        status : str 
+             Vertex status 
+        args : tuple of str 
              Additional arguments
         """
         vid     = int(sid)
         st      = int(status)
         get_pos = lambda *args: [float(c) for c in args[:4]]
-
-        v       = self._event['vertices'][-vid-1]
-        v.update({'id':       vid,
-                  'status':   st,
-                  'position': [0,0,0,0],
-                  'incoming': [],
-                  'level':    0})
+        v       = self._make_vertex(vid=vid,status=st)
         if len(args) > 0:
             poff = 0
 
-            if args[0] == '@':
+            if args[0] == '@':  
                 poff = 1
             else: # incoming list
                 poff = 2 if len(args) > 1 and args[1] == '@' else 0
-                v['incoming'].extend([int(i)-1 for i in
-                                      args[0].strip('[]').split(',')
-                                      if len(i) > 0])
+                # v['incoming'].extend([int(i)-1 for i in
+                #                       args[0].strip('[]').split(',')
+                #                       if len(i) > 0])
+                v['incoming'] = [int(i) for i in
+                                 args[0].strip('[]').split(',')
+                                 if len(i) > 0]
 
             if poff > 0:
                 v['position'] = [float(f) for f in args[poff:poff+4]]
 
+        # print(f'Created vertex {vid}: {v} from {args}')
+        # from pprint import pprint
+        # pprint(self._event['vertices'],depth=3)
 
     # ----------------------------------------------------------------
-    def _parse_particle(self,lineno,sid,aux,pid,px,py,pz,e,m,status,*args):
-        """Read a particle
-
-            id aux pid px py pz e m status
+    def _make_particle(self,
+                       pid=0,
+                       origin=None,
+                       end=None,
+                       status=0,
+                       pdg=0,
+                       momentum=None,
+                       mass=0,
+                       attributes={}):
+        '''Create a particle (a dict) from values
 
         Parameters
         ----------
-        lineno : int
-             Line number
-        sid : str
+        pid : int
+            Particle number (identifier)
+        origin : int or dict
+            Particle origin.  If positive, another particle, if
+            negative a vertex.
+        end : int or dict
+            Particle end.  If positive, another particle, if
+            negative a vertex.
+        status : int
+            Status code
+        pdg : int
+            Particle type identifier
+        momentum : list of 4 floats
+            4-momentum (px,py.pz,E)
+        mass : float
+            Generator mass
+        attributes : dict
+            Dictinary of attributes
+
+        Returns
+        -------
+        particle : dict
+            A dictionary of a particle
+        '''
+        assert pid not in self._event['particles'], \
+            f'Particle {pid} already in event'
+        assert pid >= 0, \
+            f'Invalid particle ID={pid}'
+        self._event['particles'][pid] = {'id':         pid,
+                                         'origin':     origin,
+                                         'end':        end,
+                                         'status':     status,
+                                         'pid':        pdg,
+                                         'momentum':   momentum,
+                                         'mass':       mass,
+                                         'attributes': attributes}
+        return self._event['particles'][pid]
+
+    # ----------------------------------------------------------------
+    def _parse_particle(self,lineno,*args):
+        if self._fmt == 2:
+            self._parse_particle2(lineno,*args)
+        else:
+            self._parse_particle3(lineno,*args)
+        
+    # ----------------------------------------------------------------
+    def _parse_particle2(self,lineno,id,pid,px,py,pz,e,m,
+                         status,theta,phi,aux,nflow,*args):
+        """Read a particle 
+
+            id pid px py pz e status theta phi mother [n_flow [flows]]
+
+        Parameters
+        ----------
+        lineno : int 
+             Line number 
+        id : str 
+             Particle number 
+        pid : str
              Particle id
-        aux : str
-             Particle origin (>0: mother particle, <0: production vertex)
-        status : str
-             Particle status
-        px : str
+        px : str 
              Particle momentum
-        py : str
+        py : str 
              Particle momentum
-        pz : str
+        pz : str 
              Particle momentum
-        e : str
+        e : str 
              Particle emergi
-        m : str
+        m : str 
              Particle mass
-        args : tuple of str
+        status : str 
+             Particle status
+        theta : str
+             Polar angle
+        phi : str
+             Azimuthal angle 
+        aux : str        
+             If the same as last added vertex, then it is the end
+             vertex If not the same as last added vertex, then it is
+             the end vertex, and last added vertex is the production
+             vertex.        
+        nflow : str
+             Number of flow parameters 
+        args : tuple of str 
+             Additional arguments
+
+        """
+        tid = int(id)
+        a   = {}
+        mid = int(aux)
+        if theta != '0': a['theta'] = float(theta)
+        if phi   != '0': a['phi']   = float(phi)
+        if nflow != '0': a['flow']  = [float(f) for f in args]
+        ov  = self._last_vid if self._last_vid != mid else None
+        ev  = None if mid == 0 else mid
+        p   = self._make_particle(pid        = tid,
+                                  origin     = ov,
+                                  end        = ev,
+                                  pdg        = int(pid),
+                                  momentum   = [float(px),
+                                                float(py),
+                                                float(pz),
+                                                float(e)],
+                                  mass       = float(m),
+                                  status     = int(status),
+                                  attributes = a)
+        
+    # ----------------------------------------------------------------
+    def _parse_particle3(self,lineno,sid,aux,pid,px,py,pz,e,m,status,*args):
+        """Read a particle 
+
+            id aux pid px py pz e m status 
+
+        Parameters
+        ----------
+        lineno : int 
+             Line number 
+        sid : str 
+             Particle id 
+        aux : str 
+             Particle origin (>0: mother particle, <0: production vertex)
+        status : str 
+             Particle status 
+        px : str 
+             Particle momentum
+        py : str 
+             Particle momentum
+        pz : str 
+             Particle momentum
+        e : str 
+             Particle emergi
+        m : str 
+             Particle mass
+        args : tuple of str 
              Additional arguments
         """
         self._assert_no_garbage(lineno, 'particle', args)
-
+        
         tid = int(sid)
-        p   = self._event['particles'][tid-1]
-        p.update({'id':       tid,
-                  'origin':   int(aux), # Mother or vertex
-                  'end':      None,
-                  'pid':      int(pid),
-                  'momentum': [float(px),float(py), float(pz), float(e)],
-                  'm':        float(m),
-                  'status':   int(status) })
+        p   = self._make_particle(pid       = tid,
+                                  origin    = int(aux),
+                                  end       = None,
+                                  pdg       = int(pid),
+                                  momentum  = [float(px),
+                                               float(py),
+                                               float(pz),
+                                               float(e)],
+                                  mass      = float(m),
+                                  status    = int(status))
 
-
+        
     # ----------------------------------------------------------------
     def _parse_heavyion(self,lineno,*args):
-        """Read heavy-ion information
+        """Read heavy-ion information 
 
-            [version] ncoll_hard npart_proj npart_tart ncoll
-            [nspec_n nspec_p]* nw_coll wn_coll ww_coll b psi
-            [eccentricity]* sigma_inel centrality [user_centrality]**
+            [version] ncoll_hard npart_proj npart_tart ncoll 
+            [nspec_n nspec_p]* nw_coll wn_coll ww_coll b psi 
+            [eccentricity]* sigma_inel centrality [user_centrality]** 
             [nspec_n_proj nspec_n_targ nspec_p_proj nspec_p_targ]**
             [n n-planes]** [n n-eccentricities]**
 
-        * Only exists if version=='v0' or not given
-        ** Only exists if version>0
+        * Only exists if version=='v0' or not given 
+        ** Only exists if version>0  
 
         Parameters
         ----------
-        lineno : int
-            Line number
-        args : tuple of str
-            Arguments
+        lineno : int 
+            Line number 
+        args : tuple of str 
+            Arguments 
         """
         vers = 1
         off  = 1
         if not args[0].startswith('v') or args[0] == 'v0':
             vers = 0
             off  = args[0] == 'v0'
-
+            
         self._event['heavyion'] = {'ncoll_hard': int(args[off+0]),
                                    'npart_proj': int(args[off+1]),
                                    'npart_targ': int(args[off+2]),
@@ -470,31 +781,31 @@ class Reader:
 
     # ----------------------------------------------------------------
     def _parse_pdf(self,lineno,pid1,pid2,x1,x2,scale,xf1,xf2,id1,id2,*args):
-        """Read parton distribution function
-
+        """Read parton distribution function 
+        
         Parameters
         ----------
-        lineno : int
-             Line number
-        pid1 : str
+        lineno : int 
+             Line number 
+        pid1 : str 
             Particle ID
-        pid2 : str
+        pid2 : str 
             Particle ID
-        x1 : str
-            X parameter
-        x2 : str
-            X parameter
-        scale : str
-            Scale
-        xf1 : str
+        x1 : str 
+            X parameter 
+        x2 : str 
+            X parameter 
+        scale : str 
+            Scale 
+        xf1 : str 
             Form-factor x
-        xf2 : str
+        xf2 : str 
             Form-factor x
-        id1 : str
+        id1 : str 
             PDF LHE ID
-        id2 : str
+        id2 : str 
             PDF LHE ID
-        args : tuple of str
+        args : tuple of str 
             Extra arguments (should be empty)
         """
         self._assert_no_garbage(lineno, 'pdf', args)
@@ -508,31 +819,31 @@ class Reader:
 
     # ----------------------------------------------------------------
     def _parse_xsection(self,lineno,xsec,xsecerr,*args):
-        """Read cross-section information
+        """Read cross-section information 
 
             xsec xsecerr [nacc [ntry [[xsec xsecerr]*]]]
-
+        
         Parameters
         ----------
-        lineno : int
-             Line number
-        xsec : str
+        lineno : int 
+             Line number 
+        xsec : str 
              X-section in pb
-        xsecerr : str
+        xsecerr : str 
              X-section uncertainty in pb
-        args : tuple of str
-             Additional arguments
+        args : tuple of str 
+             Additional arguments 
         """
         self._event['xsec'] = { 'value':   [float(xsec)],
                                 'uncer':   [float(xsecerr)] }
 
-
+        
         if len(args) <= 0: return;
 
         self._event['xsec']['accepted'] = int(args[0])
 
         if len(args) <= 1: return;
-
+        
         self._event['xsec']['attempted'] = int(args[1])
 
         if len(args) <= 2: return
@@ -540,77 +851,105 @@ class Reader:
         self._event['xsec']['value'].append([float(v) for v in args[2::2]])
         self._event['xsec']['uncer'].append([float(u) for u in args[2+1::2]])
 
-        assert len(self._event['xsec']['values']) == \
+        assert len(self._event['xsec']['value']) == \
             len(self._event['xsec']['uncer']), \
             f'In line {lineno} inconsistent number of X-section '\
             'values and uncertainties'
 
     # ----------------------------------------------------------------
     def _parse_weights(self,lineno,*args):
-        """Read weight values or names
-
+        """Read weight values or names 
+                                   
 
             value_or_name [value_or_name]*
 
         Parameters
         ----------
-        lineno : int
-             Line number
-        args : tuple of str
-            Weight names of values
+        lineno : int 
+             Line number 
+        args : tuple of str 
+            Weight names of values 
         """
         if self._event is not None:
-            self._event['weights'] = [float(w) for w in args]
+            try:
+                self._event['weights'] = [float(w) for w in args]
+            except:
+                self._event['weights'] = [w for w in args]            
         else:
             self._weights = [*args]
 
-
-
     # ----------------------------------------------------------------
-    def _parse_tool(self,lineno,*args):
-        """ Read tool
+    def _parse_names(self,lineno,*args):
+        """Read weight values or names 
+                                   
 
-            name [version [description]]
+            value_or_name [value_or_name]*
 
         Parameters
         ----------
-        lineno : int
-             Line number
-        args : tuple of str
-            Weight names of values
+        lineno : int 
+             Line number 
+        args : tuple of str 
+            Weight names of values 
         """
+        if self._event is not None:
+            self._event['weights_names'] = [w for w in args[1:]]            
+        else:
+            self._weight_names = [*args[1:]]
+            
+            
+
+    # ----------------------------------------------------------------
+    def _parse_tool(self,lineno,*args):
+        """ Read tool 
+        
+            name [version [description]]
+        
+        Parameters
+        ----------
+        lineno : int 
+             Line number 
+        args : tuple of str 
+            Weight names of values 
+        """        
         l = ' '.join(args).split(r'\|')
         t = {'name': l[0]}
         if len(l) > 1: t['version']  = l[1]
         if len(l) > 2: t['description'] = l[2]
 
+        if self._event is None:
+            return
+        
         if not self._event.get('tools',None):
             self._event['tools'] = []
-
+            
         self._event['tools'].append(t)
-
+        
     # ----------------------------------------------------------------
     def _parse_attribute(self,lineno,sid,what,*args):
-        """Read an attribute
-
+        """Read an attribute 
+        
             id what [parameters ...]
-
+        
         Parameters
         ----------
-        lineno : int
-             Line number
-        sid : str
-            ID
-        what : str
-            Type of attribute
-        args : tuple of str
-            Extra arguments
+        lineno : int 
+             Line number 
+        sid : str 
+            ID 
+        what : str 
+            Type of attribute 
+        args : tuple of str 
+            Extra arguments 
         """
-        tid = int(sid)
+        try:
+            tid = int(sid)
+        except:
+            tid = 0
 
         if self._event is None:
-            self._attributes[what] = ' '.joint(args)
-            return
+            self._attributes[what] = ' '.join(args)
+            return 
 
         if tid == 0:  # Event attribute
             if what in ['alphaQCD','alphaQED','event_scale']:
@@ -618,10 +957,10 @@ class Reader:
 
             elif what == 'GenHeavyIon':
                 self._parse_heavyion(lineno,*args)
-
+ 
             elif what == 'GenPdfInfo':
                 self._parse_pdf(lineno,*args)
-
+               
             elif what == 'GenCrossSection':
                 self._parse_xsection(lineno,*args)
 
@@ -629,10 +968,12 @@ class Reader:
                 self._event['attributes'][what] = ' '.join(args)
 
         elif tid > 0 and tid <= len(self._event['particles']):
-            self._event['particles'][tid-1]['attributes'][what] = args[0]
+            #self._event['particles'][tid-1]['attributes'][what] = args[0]
+            self._event['particles'][tid]['attributes'][what] = args[0]
 
         elif tid < 0 and -tid <= len(self._event['vertices']):
-            self._event['vertices'][-tid-1]['attributes'][what] = args[0]
+            #self._event['vertices'][-tid-1]['attributes'][what] = args[0]
+            self._event['vertices'][tid]['attributes'][what] = args[0]
 
     # ----------------------------------------------------------------
     def _find_free_vertex(self):
@@ -640,77 +981,91 @@ class Reader:
 
         Returns
         -------
-        id : int
-            Vertex id
-        v : dict
-            Vertex
+        id : int 
+            Vertex id 
+        v : dict 
+            Vertex 
         """
-        for vid,v in enumerate(self._event['vertices']):
-            if len(v['incoming']) <= 0:
-                return vid, v
-
-        raise RuntimeError('No free vertices left!')
-
+        #for vid,v in enumerate(self._event['vertices']):
+        #    if len(v['incoming']) <= 0:
+        #        return vid, v
+        #
+        # raise RuntimeError('No free vertices left!')
+        return min(self._event['vertices'].keys())-1
+    
+            
     # ----------------------------------------------------------------
     def _check(self,condition,msg,fail=False):
-        from sys import stderr
+        from sys import stderr 
         if not condition:
             emsg = f'In event # {self._event["number"]} {msg}'
             if fail:
                 raise RuntimeError(emsg)
             print(emsg,file=stderr)
 
-
+        
     # ----------------------------------------------------------------
     def _flesh_out(self,lineno,check=True):
-        """Flesh out the event.
+        """Flesh out the event. 
 
-        - Go through all vertices and connect incoming particles
-          to their end point
-        - Go through all particles and check if they have an origin
-          - if the origin is postive, it is a mother particle ID
-            - Get the end-point vertex of the mother (if it doesn't
-              exist, create it in free slot
-          - if the origin is negative it is a vertex id
-          - set the particle is outgoing of the vertex and adjust origin
+        - Go through all vertices and connect incoming particles 
+          to their end point 
+        - Go through all particles and check if they have an origin 
+          - if the origin is postive, it is a mother particle ID 
+            - Get the end-point vertex of the mother (if it doesn't 
+              exist, create it in free slot 
+          - if the origin is negative it is a vertex id 
+          - set the particle is outgoing of the vertex and adjust origin 
 
         Parameters
         ----------
-        lineno ; int
-            Line number
-        check : bool
+        lineno ; int 
+            Line number 
+        check : bool 
             If true, check sanity of event
-
+        
         Returns
         -------
-        lineno : int
-            Line number
-        event : dict
+        lineno : int 
+            Line number 
+        event : dict 
             Read event or None
         """
         # print(f'Fleshing out event at {lineno}')
         if self._event is None:
             return lineno,self._event
 
-        for vid,v in enumerate(self._event['vertices']):
+        for vid,v in make_iter(self._event['vertices']):
             for o in v['incoming']:
+                assert o in self._event['particles'], \
+                    f'Incoming particle {o} of vertex {vid} '+\
+                    '['+','.join([f'{oo}' for oo in v['incoming']])+'] '+\
+                    f' not in event '+\
+                    '['+','.join([f'{oo}'
+                                  for oo in self._event['particles'].keys()])+\
+                                          ']'
+                    
                 self._event['particles'][o]['end'] = vid
 
-        for pid,p in enumerate(self._event['particles']):
+        for pid,p in make_iter(self._event['particles']):
             orig = p['origin']
             if orig is not None and orig != 0:
                 if orig > 0:  # Mother
-                    mid = orig-1
+                    #mid = orig-1
+                    mid = orig
                     m   = self._event['particles'][mid]
                     if m['end'] is None:  # No vertex
-                        vid, v = self._find_free_vertex()
+                        # vid, v = self._find_free_vertex()
+                        vid = self._find_free_vertex()
+                        v   = self._make_vertex(vid=vid)
                         m['end'] = vid
                         v['incoming'].append(mid)
 
                     vid = m['end']
-
+                    
                 elif orig < 0:  # Vertex
-                    vid = -orig-1
+                    #vid = -orig-1
+                    vid = orig
 
                 v = self._event['vertices'][vid]
                 v['outgoing'].append(pid)
@@ -718,42 +1073,58 @@ class Reader:
             else:
                 p['origin'] = None
 
+            end = p['end']
+            v = self._event['vertices'].get(end,None)
+            if v is not None and pid not in v['incoming']:
+                v['incoming'].append(pid)
+
+        # from pprint import pprint        
+        # print('After flesh-out')
+        # pprint(self._event,depth=4)
+        
         #print('Calculate vertex depth')
         self._event['max_depth'] = 0;
         for vid,vertex in enumerate(self._event['vertices']):
-            self.calc_depth(vid,vertex)
-            self._event['max_depth'] = max(self._event['max_depth'],
+         for vid,vertex in self._event['vertices'].items():
+             self.calc_depth(vid,vertex)
+             self._event['max_depth'] = max(self._event['max_depth'],
                                            vertex['level'])
-
+            
 
         if not check:
             return lineno,self._event
-
-        for vid,v in enumerate(self._event['vertices']):
-            self._check(len(v['outgoing']) > 0,
+                                   
+        for vid,v in make_iter(self._event['vertices']):
+            self._check(len(v['outgoing']) > 0, 
                         f'No outgoing particles from vertex {vid}: {v}')
             self._check(len(v['incoming']) > 0,
                         f'No incoming particles to vertex {vid}: {v}')
-
-        for pid,p in enumerate(self._event['particles']):
+       
+        #for pid,p in enumerate(self._event['particles']):
+        for pid,p in make_iter(self._event['particles']):
             orig = p['origin']
             end  = p['end']
             st   = p['status']
 
             self._check(st == 1 or st > 200 or end is not None,
-                        f'Particle {p["id"]} ({p["pid"]},{st}) ' +
+                        f'Particle {p["id"]} ({p["pid"]},{st}) ' + 
                         'has no end vertex nor is it final state')
             self._check(st == 4 or orig is not None,
-                        f'Particle {p["id"]} ({p["pid"]},{st}) ' +
+                        f'Particle {p["id"]} ({p["pid"]},{st}) ' + 
                         'has no production vertex nor is it beam')
-
+            
         return lineno,self._event
 
 
-    def calc_depth(self,vid,vertex):
+    def calc_depth(self,vid,vertex,deep=0):
+        '''Calculate depth of a vertex. Recursive call'''
+        if deep > 900:
+            print(f'Warning, level is more than 900!')
+            return
+        
         if vertex['level'] > 0:
             return
-
+        
         if len(vertex['incoming']) <= 0:
             return;
 
@@ -764,11 +1135,12 @@ class Reader:
                 continue # Should not happen
 
             origin = self._event['vertices'][sid]
-            self.calc_depth(sid,origin)
+            self.calc_depth(sid,origin,deep=deep+1)
 
             vertex['level'] = max(vertex['level'],
                                   origin['level']+1)
 
+        
 
 # ====================================================================
 from contextlib import AbstractContextManager
@@ -803,7 +1175,7 @@ class HepMCInput(AbstractContextManager):
         def lineno(self):
             """Get current line number"""
             return self._lineno
-
+        
         # ------------------------------------------------------------
         @property
         def version(self):
@@ -815,20 +1187,20 @@ class HepMCInput(AbstractContextManager):
         def attributes(self):
             """Get dictionary of run attributes (possibly empty)"""
             return self._reader.attributes
-
+    
         # ----------------------------------------------------------------
         @property
         def weights(self):
             """Get dictionary of run weight names (possibly None)"""
             return self._reader.weights
-
+    
         # ----------------------------------------------------------------
         def read(self,check=True):
-            """Read a single event from stream
+            """Read a single event from stream 
 
             Returns
             -------
-            event : dict
+            event : dict 
                 Read event or None
             """
             self._lineno, ev = self._reader.read(self._stream,
@@ -839,14 +1211,14 @@ class HepMCInput(AbstractContextManager):
 
     # ----------------------------------------------------------------
     def __init__(self,inp,check=True):
-        """Context mananger of HepMC input.
-
+        """Context mananger of HepMC input.  
+        
         Paramters
         ---------
-        inp : io.TextIObase or str
-            File to read from or name of file
-            If a file, use as is.  If a string, open either as text file or
-            gzipped text file
+        inp : io.TextIObase or str 
+            File to read from or name of file 
+            If a file, use as is.  If a string, open either as text file or 
+            gzipped text file 
         """
         self._lineno = 0
         self._stream = inp
@@ -874,7 +1246,7 @@ class HepMCInput(AbstractContextManager):
     def __enter__(self):
         """Enter context, returns event iterator"""
         return iter(self)
-
+    
     # ----------------------------------------------------------------
     def __exit__(self,*exc):
         """Exit context, returns None"""
@@ -885,7 +1257,7 @@ class HepMCInput(AbstractContextManager):
         if val is not None:
             from traceback import print_exception
             print_exception(tpe,val,tb)
-
+        
         return None
 
 # ====================================================================
@@ -1764,7 +2136,7 @@ def _greek_unicode(let):
 # --------------------------------------------------------------------
 def _ltx2html(l):
     from re import sub
-
+    
     l = sub(r"\^\{(.*?)\}",            r"<SUP>\1</SUP>", l)
     l = sub(r"\_\{(.*?)\}",            r"<SUB>\1</SUB>", l)
     l = sub(r"\\prime(.*?)",           r"&#8242;",       l)
@@ -1775,7 +2147,7 @@ def _ltx2html(l):
     l = sub(r"\\bar\{(.*?)\}",         r"\1&#773;",      l)
     l = sub(r"\\overline\{(.*?)\}",    r"\1&#773;",      l)
     return l
-
+    
 # ====================================================================
 class FourVector:
     def __init__(self,x,y,z,t):
@@ -1824,7 +2196,7 @@ class FourVector:
             raise
 
         self._v = v
-
+    
     @property
     def r2(self):
         """Square radius"""
@@ -1866,7 +2238,7 @@ class FourVector:
         """Polar angle"""
         from numpy import arctan2
         return arctan2(self.perp, self.z)
-
+        
     px  = x
     """Momentum along X"""
     py  = y
@@ -1887,7 +2259,7 @@ class FourVector:
     """Momentum"""
     p2  = r2
     """Square momentum"""
-
+    
     @property
     def eta(self):
         """Pseudorapidity"""
@@ -1901,7 +2273,7 @@ class FourVector:
 
     def __len__(self):
         return len(self._v)
-
+    
     def __repr__(self):
         """Representation"""
         return f'[{self.x},{self.y},{self.z},{self.t}]'
@@ -1968,7 +2340,7 @@ class Particle:
 
     def __repr__(self):
         return f'{self.id:6d} {self.pid:10d} {self.momentum}'
-
+        
 # --------------------------------------------------------------------
 class Vertex:
     def __init__(self):
@@ -2008,7 +2380,7 @@ class Vertex:
     def level(self):
         """Level in tree"""
         return self._level
-
+    
     def calc_level(self):
         if self._level >= 0:
             return
@@ -2018,8 +2390,8 @@ class Vertex:
                 p.origin.calc_level()
 
             self._level = max(self.level,p.origin.level)
-
-
+            
+            
     def add_incoming(self,p):
         """Add incoming particle"""
         if p not in self._incoming:
@@ -2038,7 +2410,7 @@ class Vertex:
 
     def __repr__(self):
         return f'{self.id:6d} {self.status:6d} @ {self.position}'
-
+    
     @classmethod
     def from_dict(cls,d):
         o             = cls()
@@ -2047,7 +2419,7 @@ class Vertex:
         o._position   = d.get('position',  [0,0,0,0])
         o._attributes = d.get('attributes',{}).copy()
         return o
-
+            
 # --------------------------------------------------------------------
 class Event:
     def __init__(self):
@@ -2073,13 +2445,13 @@ class Event:
         if pid not in self._particles:
             p = Particle.from_dict(d['particles'][pid])
             self._particles[pid] = p
-
+            
         return self._particles[pid]
-
+        
     def _decode(self,d):
         self._number = d.get('id',0)
 
-        for vid, vd in enumerate(d['vertices']):
+        for vid, vd in make_iter(d['vertices']):
             v                   = Vertex.from_dict(vd)
             self._vertices[vid] = v
 
@@ -2098,7 +2470,7 @@ class Event:
         assert len(d['particles']) == len(self._particles), \
             f'Inconsistent number of particles - was {len(d["particles"])} '+\
             f' found {len(self._particles)}'
-
+        
         for pid,p in self._particles.items():
             assert p.origin is not None or p.status == 4, \
                 f'Particle {pid} has no origin and is not beam'
@@ -2108,18 +2480,18 @@ class Event:
 
         for vid,v in enumerate(self._vertices[vid]):
             v.calc_level()
-
-
+            
+            
     @classmethod
     def from_dict(cls,d):
         o = cls()
         o._decode(d)
         return o
+    
 
+                
 
-
-
-
+    
 # ====================================================================
 class Dump:
     def __init__(self):
@@ -2129,7 +2501,7 @@ class Dump:
         beams = []
 
         # for pid,p in enumerate(ev['particles']):
-
+            
 # ====================================================================
 class Graph:
     def __init__(self,prefix='',max_level=-1,max_de=True):
@@ -2144,7 +2516,7 @@ class Graph:
 
     def veto1(self,vertex):
         return self._max >= 0 and vertex['level'] >= self._max;
-
+    
     def pid2ltx(self,pid):
         nucleus = pid > 1000000000
         eid     = pid
@@ -2157,20 +2529,21 @@ class Graph:
             eid = 1000000000 + z * 10000
             dft = fr'X_{{{z}}}^{{{a}}}({pid%10})'
             # Nucleous
-
+            
         ltx = _pid2ltx.get(eid,dft)
 
         if a is not None:
             ltx += f"^{{{a}}}"
             if (pid % 10) != 0:
                 ltx += f"({pid % 10})"
-
+            
         return _ltx2html(ltx)
 
     def edge(self,dot,start,end,particle):
         from numpy import log
 
-        elog = log(particle['momentum'][3])
+        e     = particle['momentum'][3]
+        elog  = 0 if e <= 0 else log(e) 
         attrs = { 'penwidth': f'{(max(1,min(10,elog))):5.3f}' }
 
         if particle['status'] == 1:
@@ -2180,16 +2553,17 @@ class Graph:
         elif particle['status'] == 4:
             attrs['color'] = 'darkblue'
         else:
+            attrs['color'] = 'darkmagenta'
             apid = abs(particle['pid'])
             if (apid in [81,82] or
                 apid < 25       or
-                (apid//1000 in [1,2,3,4,5] and
+                (apid//1000 in [1,2,3,4,5] and 
                  (apid % 1000)//10 in [1,2,3,4] and
                  (apid % 100) in [1,3])):
                 attrs['color'] = 'darkred'
         if particle['status'] > 200:
             attrs['style'] = 'dashed'
-
+            
         dot.edge(start,end,
                  f'< {self.pid2ltx(particle["pid"])}'
                  f'({particle["id"]},{particle["status"]})>',
@@ -2210,20 +2584,28 @@ class Graph:
              ?
          """
         from numpy import asarray, isclose, sqrt, sum
-
+        
         attrs = {'shape': 'point' if vertex is None else 'circle' }
-        label = f''
-
+        label = f'' 
+        
         if vertex is not None and event is not None:
             label = f'{vertex["id"]}'
             #label = f'{vertex["id"]} @ {vertex["level"]}'
-
+            
             in_mom  = asarray([0.,0.,0.,0.])
             out_mom = asarray([0.,0.,0.,0.])
             for pid in vertex['incoming']:
+                if pid not in event['particles']:
+                    print(f'Missing incoming particle {pid} from '
+                          f'vertex {label}')
+                    continue
                 in_mom += asarray(event['particles'][pid]['momentum'])
-
+                
             for pid in vertex['outgoing']:
+                if pid not in event['particles']:
+                    print(f'Missing outgoing particle {pid} from '
+                          f'vertex {label}')
+                    continue
                 out_mom += asarray(event['particles'][pid]['momentum'])
 
             if self._max_de > 0:
@@ -2231,7 +2613,7 @@ class Graph:
                 d_sum = sqrt(sum(d_mom**2))
                 d_sum = in_mom[3] - out_mom[3]
                 e_sum = in_mom[3] + out_mom[3]
-                e_chg = d_sum / e_sum * 100;
+                e_chg = d_sum / e_sum * 100; 
 
                 if abs(e_chg) > self._max_de:
                     label          += f',d={e_chg:5.1f}%'
@@ -2240,11 +2622,11 @@ class Graph:
             if len(vertex['incoming']) == 1:
                 if event['particles'][vertex['incoming'][0]]['status'] == 2:
                     attrs['color'] = 'darkgreen'
-
-
+            
+        
         dot.node(vid, label, **attrs);
-
-
+        
+        
     def nodeid(self,tid,prefix='v'):
         """Encode a node identifier
 
@@ -2256,7 +2638,7 @@ class Graph:
             Prefix to identifier
         """
         return f'{prefix}{tid:09d}'
-
+    
     def make_dot(self,event,no):
         """Create a graph from an event
 
@@ -2277,55 +2659,61 @@ class Graph:
               f'{len(event["vertices"])} vertices to depth '
               f'{event["max_depth"]}')
 
-        for vid,vertex in enumerate(event['vertices']):
-            # Skip if end vertex is too deep
+        for vid,vertex in make_iter(event['vertices']):
+            # Skip if end vertex is too deep 
             if self.veto(vertex):
                 #print(f'Vetoed vertex {vid} with depth={vertex["level"]}')
                 continue
-
+            
             # Create vertex node index
             self.node(dot,self.nodeid(vid),event,vertex)
             nvertex += 1
 
-        for pid,particle in enumerate(event['particles']):
+        for pid,particle in make_iter(event['particles']):
             # For particles with no origin, but an end, create a dummy origin node and
-            # and edge to end vertex
+            # and edge to end vertex 
             if particle['origin'] is None and particle['end'] is not None:
-                # Skip if end vertex is too deep
+                # Skip if end vertex is too deep 
                 if self.veto(event['vertices'][particle['end']]):
                     #print(f'Skip particle {pid} because end vertex too deep')
                     continue
-
+                
                 self.node(dot,self.nodeid(pid,'s'))
                 ndummy += 1
                 self.edge(dot,
                           self.nodeid(pid,'s'),
                           self.nodeid(particle['end'],'v'),particle)
 
-        for vid,vertex in enumerate(event['vertices']):
+        #for vid,vertex in enumerate(event['vertices']):
+        for vid,vertex in make_iter(event['vertices']):
             if self.veto(vertex):
                 continue
-
+            
             for pid in vertex['outgoing']:
+                if pid not in event['particles']:
+                    print(f'Missing outgoing particle {pid} from '
+                          f'vertex {vid}')
+                    continue
                 particle = event['particles'][pid]
                 eid      = particle['end']
-                end      = event['vertices'][eid] if eid is not None else None
-
+                end      = event['vertices'][eid] \
+                    if eid is not None and eid != 0 else None
+                
                 if eid is None or self.veto(end):   # Final state?
-                    # If particle has no end vertex, create a dummy vertex
+                    # If particle has no end vertex, create a dummy vertex 
                     ve = self.nodeid(pid,'e')
                     self.node(dot,ve)
                     ndummy += 1
                 else:
                     ve = self.nodeid(particle['end'])
 
-                # Create edge between start and end
+                # Create edge between start and end 
                 self.edge(dot,self.nodeid(vid),ve,particle)
 
         print(f'Made {nvertex} vertexes and {ndummy} dummies')
         return dot
 
-
+    
     def __call__(self,ev,no,stagger=0,view=True):
         dot = self.make_dot(ev,no)
         if view:
@@ -2333,9 +2721,10 @@ class Graph:
                 dot.view()
             else:
                 dot.unflatten(stagger=stagger).view()
-
-
-
+        return dot
+            
+        
+        
 # ====================================================================
 def show(inp,
          max=10,
@@ -2345,7 +2734,8 @@ def show(inp,
          prefix='',
          view=True,
          max_depth=-1,
-         max_de=True
+         max_de=True,
+         dump=False
          ):
     if prefix == '':
         from pathlib import Path
@@ -2353,16 +2743,21 @@ def show(inp,
 
     with HepMCInput(inp,check) as  Events:
         g = Graph(prefix,max_depth,max_de);
-
+            
         for iev,ev in enumerate(Events):
             #print(f'Read event # {iev}')
             if max > 0 and iev >= max+skip:
                 break
             if iev < skip:
-                continue
+                continue 
             #print(f'Creating graph of event # {iev}')
-            g(ev,iev,stagger=stagger,view=view)
+            dot = g(ev,iev,stagger=stagger,view=view)
             #print(f'Created graph of event # {iev}')
+
+            if dump:
+                with open(dot.name+'.dot','w') as out:
+                    print(dot.source, file=out)
+            
 
 # ====================================================================
 if __name__ == '__main__':
@@ -2389,9 +2784,11 @@ if __name__ == '__main__':
     ap.add_argument('-d','--max-de',  type=float, default=5,
                     help='Mark vertex which do not preserve energy '
                     'above given percentage')
+    ap.add_argument('-D','--dump',  action='store_true',
+                    help='Write graphs to file')
 
     args = ap.parse_args()
-
+    
     #try:
     for inp in args.input:
         show(inp,
@@ -2401,13 +2798,8 @@ if __name__ == '__main__':
              check     = args.check,
              view      = args.view,
              max_depth = args.max_depth,
-             max_de   = args.max_de)
+             max_de    = args.max_de,
+             dump      = args.dump)
 
     #except Exception as e:
     #    print(e)
-
-
-#
-# EOF
-#
-

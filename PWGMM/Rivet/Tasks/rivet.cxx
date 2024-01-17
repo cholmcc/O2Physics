@@ -10,7 +10,6 @@
 // or submit itself to any jurisdiction.
 //
 // #include <Framework/AnalysisTask.h>
-#include <Framework/runDataProcessing.h>
 #include <Framework/AnalysisHelpers.h>
 #include <Framework/AnalysisTask.h>
 #include <Generators/AODToHepMC.h>
@@ -18,6 +17,28 @@
 
 template <typename T>
 using OutputObj = o2::framework::OutputObj<T>;
+
+//--------------------------------------------------------------------
+using o2::framework::ConfigParamKind;
+using o2::framework::ConfigParamSpec;
+
+// -------------------------------------------------------------------
+void customize(std::vector<ConfigParamSpec>& workflowOptions)
+{
+  using o2::framework::VariantType;
+
+  workflowOptions.emplace_back(ConfigParamSpec{"hepmc-aux", //
+                                               VariantType::Bool,
+                                               false, //
+                                               {"Also process auxiliary "
+                                                "HepMC tables"},
+                                               ConfigParamKind::kProcessFlag});
+}
+
+//--------------------------------------------------------------------
+// This _must_ be included after our "customize" function above, or
+// that function will not be taken into account.
+#include <Framework/runDataProcessing.h>
 
 //--------------------------------------------------------------------
 /** A DPL to process simulation output (@c o2::aod::MCCollision
@@ -212,25 +233,15 @@ struct Task3 {
     mConverter.process(collision, tracks);
     mWrapper.process(mConverter.mEvent);
   }
+#if 0
   decltype(o2::framework::ProcessConfigurable{&Task3::processAux,
                                               "hepmx-auc", false,
                                               "Auxiliary info"})
     doprocessAux = o2::framework::ProcessConfigurable{&Task3::processAux,
                                                       "hepmc-aux", false,
                                                       "Auxillary info"};
+#endif
 };
-
-//--------------------------------------------------------------------
-using o2::framework::ConfigParamSpec;
-
-//--------------------------------------------------------------------
-void customize(std::vector<ConfigParamSpec>& workflowOptions)
-{
-  ConfigParamSpec optionHepMCAux{"hepmc-aux", //
-    VariantType::Bool, false, //
-    {"Also process auxiliary HepMC tables"}};
-  workflowOptions.push_back(optionHepMCAux);
-}
 
 //--------------------------------------------------------------------
 using WorkflowSpec = o2::framework::WorkflowSpec;
@@ -245,7 +256,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfg)
   // Task1: One entry: header, tracks, auxiliary
   // Task2: One entry: header, tracks
   // Task3: Two entry: header, tracks, and auxiliary
-  if (cfg.options().get<bool>("hepmc-aux")) 
+  if (cfg.options().get<bool>("hepmc-aux"))
     return WorkflowSpec{
       adaptAnalysisTask<Task1>(cfg, TaskName{"o2-analysis-mm-rivet"})};
   return WorkflowSpec{

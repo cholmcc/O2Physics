@@ -1,4 +1,8 @@
 #!/usr/bin/env -S python -i --
+#
+# Linter does not like single quotes for strings - sigh!
+# Linter does not like splitting statements over multiple lines - sigh!
+#
 # pyright: basic
 # mypy: disable_error_code=method-assign
 def plotit(infile, raw=False, reference=False, save=False):
@@ -33,13 +37,18 @@ def plotit(infile, raw=False, reference=False, save=False):
         raise RuntimeError(f"Histogram not found in {infile}")
 
     ax = gca()
-    ax.errorbar(histo.xVals(), histo.yVals(), asarray(histo.yErrs()).T, asarray(histo.xErrs()).T, "o")
+    ax.errorbar(histo.xVals(),            # Do not
+                histo.yVals(),            # mess
+                asarray(histo.yErrs()).T, # with 
+                asarray(histo.xErrs()).T, # my
+                "o"                       # formatting
+    )
     ax.set_xlabel(r"$\eta$")
     ax.set_ylabel(r"$\mathrm{d}N_{\mathrm{ch}}/\mathrm{d}\eta$")
     ax.set_title(
         f"{int(nev.val())} events "  # pyright: ignore
-        f'{"("+prefix+")" if len(prefix)>0 else ""}'
-    )  # pyright: ignore
+        f'{"("+prefix+")" if len(prefix)>0 else ""}' # pyright: ignore
+    )  
 
     ax.figure.show()
     ax.figure.tight_layout()
@@ -58,10 +67,23 @@ if __name__ == "__main__":
     from argparse import ArgumentParser, FileType
 
     ap = ArgumentParser(description="Plot results")
-    ap.add_argument("input", nargs="?", default="AO2D_LHC23d1f_520259_001.yoda", help="Input file", type=FileType("r"))
-    ap.add_argument("-r", "--raw", action="store_true", help="Show raw results")
-    ap.add_argument("-R", "--reference", action="store_true", help="Show referene results")
-    ap.add_argument("-s", "--save", action="store_true", help="Save plot to image file")
+    ap.add_argument("input",                                 # Keep your
+                    nargs="?",                               # hands off
+                    default="AO2D_LHC23d1f_520259_001.yoda", # my 
+                    help="Input file",                       # code
+                    type=FileType("r"))
+    ap.add_argument("-r",                # Keep your
+                    "--raw",             # hands off
+                    action="store_true", # my code
+                    help="Show raw results")
+    ap.add_argument("-R",                # Keep your
+                    "--reference",       # hands off
+                    action="store_true", # my code  
+                    help="Show referene results")
+    ap.add_argument("-s",                # Keep your
+                    "--save",            # hands off
+                    action="store_true", # my code  
+                    help="Save plot to image file")
 
     def handle_exit(status=0, message=""):
         raise RuntimeError(message)
@@ -70,7 +92,10 @@ if __name__ == "__main__":
 
     try:
         args = ap.parse_args()
-        plotit(args.input, raw=args.raw, reference=args.reference, save=args.save)
+        plotit(args.input,               # Do not
+               raw=args.raw,             # mess with
+               reference=args.reference, # my formatting
+               save=args.save)
     except RuntimeError as e:
         print(e, end="")
 

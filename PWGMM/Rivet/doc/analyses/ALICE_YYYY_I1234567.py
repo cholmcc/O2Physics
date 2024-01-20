@@ -1,5 +1,6 @@
 #!/usr/bin/env -S python -i --
 # pyright: basic
+# mypy: disable_error_code=method-assign
 def plotit(infile,raw=False,reference=False,save=False):
     from sys import stderr
     try:
@@ -73,7 +74,7 @@ if __name__ == '__main__':
 
     def handle_exit(status=0,message=''):
         raise RuntimeError(message)
-    ap.exit = handle_exit  # pyright: ignore  mypy: allow-method-assign
+    ap.exit = handle_exit  # pyright: ignore
 
     try:
         args = ap.parse_args()

@@ -16,7 +16,7 @@
 #  along with this program.  If not, see
 #  <https://www.gnu.org/licenses/>.
 #
-# pyright: basic
+# pyright: basic,reportOptionalSubscript=false
 """Module to read in HepMC files
 
 This supports both

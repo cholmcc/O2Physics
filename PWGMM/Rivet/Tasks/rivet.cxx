@@ -245,7 +245,7 @@ struct Task3 {
     // will the events be passed to other process member functions,
     // again one event at a time.  Thus, we cannot rely on the events
     // being _distributed_ to the processes at the same time.
-    if (doprocessPlain) {
+    if (doPlain) {
       return;
     }
     LOG(info) << "=== Processing all information";
@@ -268,7 +268,7 @@ struct Task3 {
   {
     // If we're also asked to process the auxiliary information, then
     // do nothing here, as that will mess up the processing.
-    if (not doprocessPlain) {
+    if (!doPlain) {
       return;
     }
 
@@ -283,10 +283,10 @@ struct Task3 {
   decltype(o2::framework::ProcessConfigurable{&Task3::processPlain,
                                               "hepmx-no-aux", false,
                                               "Do not process Auxiliary info"})
-    doprocessPlain = o2::framework::ProcessConfigurable{&Task3::processPlain,
-                                                        "hepmc-no-aux", false,
-                                                        "Do not process "
-                                                        "Auxillary info"};
+    doPlain = o2::framework::ProcessConfigurable{&Task3::processPlain,
+                                                 "hepmc-no-aux", false,
+                                                 "Do not process "
+                                                 "Auxillary info"};
 };
 #endif
 
@@ -301,6 +301,7 @@ using TaskName = o2::framework::TaskName;
 using DataProcessorSpec = o2::framework::DataProcessorSpec;
 using ConfigContext = o2::framework::ConfigContext;
 
+/** Entry point of @a o2-analysis-mm-rivet */
 WorkflowSpec defineDataProcessing(ConfigContext const& cfg)
 {
   using o2::framework::adaptAnalysisTask;
@@ -308,14 +309,17 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfg)
   // Task1: One entry: header, tracks, auxiliary
   // Task2: One entry: header, tracks
   // Task3: Two entry: header, tracks, and auxiliary
+#ifdef RIVET_TASK_AUX
   return WorkflowSpec{
     adaptAnalysisTask<Task3>(cfg, TaskName{"o2-analysis-mm-rivet"})};
-
-  // if (cfg.options().get<bool>("hepmc-aux"))
-  //   return WorkflowSpec{
-  //     adaptAnalysisTask<Task1>(cfg, TaskName{"o2-analysis-mm-rivet"})};
-  // return WorkflowSpec{
-  //   adaptAnalysisTask<Task2>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+#else
+  if (cfg.options().get<bool>("hepmc-aux")) {
+    return WorkflowSpec{
+      adaptAnalysisTask<Task1>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+  }
+  return WorkflowSpec{
+    adaptAnalysisTask<Task2>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+#endif
 }
 //
 // EOF

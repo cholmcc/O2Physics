@@ -16,6 +16,7 @@
 #  along with this program.  If not, see
 #  <https://www.gnu.org/licenses/>.
 #
+# pyright: basic
 """Module to read in HepMC files
 
 This supports both
@@ -245,6 +246,7 @@ class Reader:
 
         lineno = 0
 
+        tokens = []
         try:
             while True:
                 lineno, tokens = self._tokenize(stream, lineno)
@@ -278,15 +280,24 @@ class Reader:
                 if not tokens:
                     break
 
-                if   tokens[0] == 'U': self._parse_units    (lineno,*tokens[1:])
-                elif tokens[0] == 'A': self._parse_attribute(lineno,*tokens[1:])
-                elif tokens[0] == 'P': self._parse_particle (lineno,*tokens[1:])
-                elif tokens[0] == 'V': self._parse_vertex   (lineno,*tokens[1:])
-                elif tokens[0] == 'T': self._parse_tool     (lineno,*tokens[1:])
-                elif tokens[0] == 'W': self._parse_weights  (lineno,*tokens[1:])
-                elif tokens[0] == 'N': self._parse_names    (lineno,*tokens[1:])
-                elif tokens[0] == 'C': self._parse_xsection (lineno,*tokens[1:])
-                elif tokens[0] == 'F': self._parse_pdf      (lineno,*tokens[1:])
+                if   tokens[0] == 'U':
+                    self._parse_units    (lineno,*tokens[1:])
+                elif tokens[0] == 'A':
+                    self._parse_attribute(lineno,*tokens[1:])
+                elif tokens[0] == 'P':
+                    self._parse_particle (lineno,*tokens[1:])
+                elif tokens[0] == 'V':
+                    self._parse_vertex   (lineno,*tokens[1:])
+                elif tokens[0] == 'T':
+                    self._parse_tool     (lineno,*tokens[1:])
+                elif tokens[0] == 'W':
+                    self._parse_weights  (lineno,*tokens[1:])
+                elif tokens[0] == 'N':
+                    self._parse_names    (lineno,*tokens[1:])
+                elif tokens[0] == 'C':
+                    self._parse_xsection (lineno,*tokens[1:])
+                elif tokens[0] == 'F':
+                    self._parse_pdf      (lineno,*tokens[1:])
                 elif tokens[0] == 'E':
                     lineno = self._unread(stream,lineno)
                     break
@@ -417,7 +428,7 @@ class Reader:
         """
         self._assert_no_garbage(lineno, 'units', args)
 
-        self._event['units'] = { 'energy': energy, 'length': length }
+        self._event['units'] = { 'energy': energy, 'length': length }  # pyright: ignore
 
 
     # ----------------------------------------------------------------
@@ -453,11 +464,11 @@ class Reader:
         vertex : dict
             Dictionary of vertex
         '''
-        assert vid not in self._event['vertices'], \
-            f'Vertex {vid} already in event'
-        assert vid <= 0, \
-            f'Invalid vertex ID={vid}'
-        self._event['vertices'][vid] = {
+        if vid in self._event['vertices']: # pyright: ignore
+            raise RuntimeError(f'Vertex {vid} already in event')
+        if vid > 0:
+            raise RuntimeError(f'Invalid vertex ID={vid}')
+        self._event['vertices'][vid] = {  # pyright: ignore
             'id':         vid,
             'status':     status,
             'position':   [0,0,0,0] if position is None else position,
@@ -465,7 +476,7 @@ class Reader:
             'outgoing':   [] if outgoing is None else outgoing,
             'attributes': {} if attributes is None else attributes,
             'level':      level}
-        return self._event['vertices'][vid]
+        return self._event['vertices'][vid] # pyright: ignore
 
     # ----------------------------------------------------------------
     def _parse_vertex(self,lineno,*args):
@@ -594,11 +605,11 @@ class Reader:
         particle : dict
             A dictionary of a particle
         '''
-        assert pid not in self._event['particles'], \
-            f'Particle {pid} already in event'
-        assert pid >= 0, \
-            f'Invalid particle ID={pid}'
-        self._event['particles'][pid] = {'id':         pid,
+        if pid  in self._event['particles']: # pyright: ignore
+            raise RuntimeError(f'Particle {pid} already in event')
+        if pid <= 0:
+            raise RuntimeError(f'Invalid particle ID={pid}')
+        self._event['particles'][pid] = {'id':         pid,  # pyright: ignore
                                          'origin':     origin,
                                          'end':        end,
                                          'status':     status,
@@ -606,7 +617,7 @@ class Reader:
                                          'momentum':   momentum,
                                          'mass':       mass,
                                          'attributes': attributes}
-        return self._event['particles'][pid]
+        return self._event['particles'][pid] # pyright: ignore
 
     # ----------------------------------------------------------------
     def _parse_particle(self,lineno,*args):
@@ -677,7 +688,7 @@ class Reader:
                                           float(py),
                                           float(pz),
                                           float(e)],
-                            mass       = float(m),
+                            mass       = float(m),  # pyright: ignore
                             status     = int(status),
                             attributes = a)
 
@@ -722,7 +733,7 @@ class Reader:
                                          float(py),
                                          float(pz),
                                          float(e)],
-                            mass      = float(m),
+                            mass      = float(m),  # pyright: ignore
                             status    = int(status))
 
 
@@ -752,49 +763,49 @@ class Reader:
             vers = 0
             off  = args[0] == 'v0'
             
-        self._event['heavyion'] = {'ncoll_hard': int(args[off+0]),
-                                   'npart_proj': int(args[off+1]),
-                                   'npart_targ': int(args[off+2]),
-                                   'ncoll':      int(args[off+3])
+            self._event['heavyion'] = {'ncoll_hard': int(args[off+0]),  # pyright: ignore
+                                       'npart_proj': int(args[off+1]),
+                                       'npart_targ': int(args[off+2]),
+                                       'ncoll':      int(args[off+3])
                                    }
-        hi = self._event['heavyion']
+        hi = self._event['heavyion']  # pyright: ignore
 
         if vers == 0:
             hi['nspec_n'] =  int(args[off+4])
             hi['nspec_p'] =  int(args[off+5])
             off          += 2
 
-        hi.update({'nw_coll': int(args[off+4]),
-                   'wn_coll': int(args[off+5]),
-                   'ww_coll': int(args[off+6]),
-                   'b':       float(args[off+7]),
-                   'psi':     float(args[off+8])})
+        hi.update({'nw_coll': int(args[off+4]),    # pyright: ignore
+                   'wn_coll': int(args[off+5]),    # pyright: ignore
+                   'ww_coll': int(args[off+6]),    # pyright: ignore
+                   'b':       float(args[off+7]),  # pyright: ignore
+                   'psi':     float(args[off+8])}) # pyright: ignore
 
         if vers == 0:
-            hi['eccentricity'] = float(args[off+9])
+            hi['eccentricity'] = float(args[off+9])  # pyright: ignore
             off += 1;
 
-        hi['sigma_inel'] = float(args[off+9])
-        hi['centrality'] = float(args[off+10])
+        hi['sigma_inel'] = float(args[off+9])    # pyright: ignore
+        hi['centrality'] = float(args[off+10])   # pyright: ignore
 
         if vers > 0:
-            hi['user_centrality'] =  float(args[off+11])
+            hi['user_centrality'] =  float(args[off+11])  # pyright: ignore
             off                   += 1
 
-        hi.update({'nspec_n_proj': float(args[off+11]),
-                   'nspec_n_targ': float(args[off+12]),
-                   'nspec_p_proj': float(args[off+13]),
-                   'nspec_p_targ': float(args[off+14]) })
+        hi.update({'nspec_n_proj': float(args[off+11]),  # pyright: ignore
+                   'nspec_n_targ': float(args[off+12]),  # pyright: ignore
+                   'nspec_p_proj': float(args[off+13]), # pyright: ignore
+                   'nspec_p_targ': float(args[off+14]) })  # pyright: ignore
 
         if len(args) == off+14+1:  # Linter doesn't like single-line if's
             return
 
         n = int(args[off+15])
-        hi['planes'] = [float(f) for f in args[off+16:off+16+n]]
+        hi['planes'] = [float(f) for f in args[off+16:off+16+n]]  # pyright: ignore
 
         off += n + 1
         n = int(args[off+15])
-        hi['eccentricities'] = [float(f) for f in args[off+16:off+16+n]]
+        hi['eccentricities'] = [float(f) for f in args[off+16:off+16+n]]  # pyright: ignore
 
     # ----------------------------------------------------------------
     def _parse_pdf(self,lineno,pid1,pid2,x1,x2,scale,xf1,xf2,id1,id2,*args):
@@ -827,7 +838,7 @@ class Reader:
         """
         self._assert_no_garbage(lineno, 'pdf', args)
 
-        self._event['pdf'] = {'pids':  [int(pid1), int(pid2)],
+        self._event['pdf'] = {'pids':  [int(pid1), int(pid2)],  # pyright: ignore
                               'x':     [float(x1), float(x2)],
                               'scale': float(scale),
                               'xf':    [float(xf1),float(xf2)],
@@ -851,28 +862,28 @@ class Reader:
         args : tuple of str
              Additional arguments
         """
-        self._event['xsec'] = { 'value':   [float(xsec)],
+        self._event['xsec'] = { 'value':   [float(xsec)],  # pyright: ignore
                                 'uncer':   [float(xsecerr)] }
 
 
-        if len(args) <= 0: # Linter doesn't like single-line if's
+        if args and len(args) <= 0: # Linter doesn't like single-line if's
             return;
 
-        self._event['xsec']['accepted'] = int(args[0])
-
+        self._event['xsec']['accepted'] = int(args[0]) # pyright: ignore
+        
         if len(args) <= 1: # Linter doesn't like single-line if's
             return;
 
-        self._event['xsec']['attempted'] = int(args[1])
+        self._event['xsec']['attempted'] = int(args[1]) # pyright: ignore
 
         if len(args) <= 2: # Linter doesn't like single-line if's
             return
 
-        self._event['xsec']['value'].append([float(v) for v in args[2::2]])
-        self._event['xsec']['uncer'].append([float(u) for u in args[2+1::2]])
+        self._event['xsec']['value'].append([float(v) for v in args[2::2]]) # pyright: ignore
+        self._event['xsec']['uncer'].append([float(u) for u in args[2+1::2]]) # pyright: ignore
 
-        assert len(self._event['xsec']['value']) == \
-            len(self._event['xsec']['uncer']), \
+        assert len(self._event['xsec']['value']) == \  # pyright: ignore
+            len(self._event['xsec']['uncer']), \  # pyright: ignore
             f'In line {lineno} inconsistent number of X-section '\
             'values and uncertainties'
 
@@ -966,7 +977,7 @@ class Reader:
         """
         try:
             tid = int(sid)
-        except:
+        except Exception: # Linter doesn't like bare except - sigh!
             tid = 0
 
         if self._event is None:
@@ -1013,14 +1024,14 @@ class Reader:
         #        return vid, v
         #
         # raise RuntimeError('No free vertices left!')
-        return min(self._event['vertices'].keys())-1
+        return min(self._event['vertices'].keys())-1  # pyright: ignore
 
 
     # ----------------------------------------------------------------
     def _check(self,condition,msg,fail=False):
         from sys import stderr
         if not condition:
-            emsg = f'In event # {self._event["number"]} {msg}'
+            emsg = f'In event # {self._event["number"]} {msg}'  # pyright: ignore
             if fail:
                 raise RuntimeError(emsg)
             print(emsg,file=stderr)
@@ -1089,9 +1100,9 @@ class Reader:
                     #vid = -orig-1
                     vid = orig
 
-                v = self._event['vertices'][vid]
+                v = self._event['vertices'][vid]  # pyright: ignore
                 v['outgoing'].append(pid)
-                p['origin'] = vid
+                p['origin'] = vid  # pyright: ignore
             else:
                 p['origin'] = None
 
@@ -1151,12 +1162,12 @@ class Reader:
             return;
 
         for pid in vertex['incoming']:
-            particle = self._event['particles'][pid]
+            particle = self._event['particles'][pid]  # pyright: ignore
             sid      = particle['origin']
             if sid is None:
                 continue # Should not happen
 
-            origin = self._event['vertices'][sid]
+            origin = self._event['vertices'][sid]  # pyright: ignore
             self.calc_depth(sid,origin,deep=deep+1)
 
             vertex['level'] = max(vertex['level'],
@@ -2154,7 +2165,7 @@ def _greek_unicode(let):
                   f'LETTER {let.upper()}')
 
 # --------------------------------------------------------------------
-def _ltx2html(l):
+def _ltx2html(ltx):
     from re import sub
 
     ltx = sub(r"\^\{(.*?)\}",            r"<SUP>\1</SUP>", ltx)
@@ -2251,7 +2262,8 @@ class Graph:
              ?
          """
         try:
-            from numpy import asarray, sum
+            # pylint: disable-next=import-error
+            from numpy import asarray, sum  # pyright: ignore
         except Exception as e:
             raise e
         
@@ -2321,7 +2333,8 @@ class Graph:
              The event
         """
         try:
-            from graphviz import Digraph
+            # pylint: disable-next=import-error
+            from graphviz import Digraph  # pyright: ignore
         except Exception as e:
             raise e
 
@@ -2479,3 +2492,6 @@ if __name__ == '__main__':
 
     #except Exception as e:
     #    print(e)
+#
+# EOF
+#

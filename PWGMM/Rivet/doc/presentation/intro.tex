@@ -22,6 +22,7 @@
 \newcommand\Yoda{{\scshape Yoda}}
 \newcommand\HepMC{{\scshape HepMC}}
 \newcommand\Otwo{O\textsuperscript{2}}
+\newcommand\OtwoPhysics{O\textsuperscript{2}Physics}
 \newcommand\AOD{AO\textsuperscript{2}D}
 \newcommand\Pythia{{\scshape Pythia}}
 
@@ -61,7 +62,7 @@
 }
 %% --- Title, and so on ----------------------------------------------
 \title{\ALICE{} \Otwo{} and \Rivet}%
-\subtitle{\url{https://gitlab.com/cholmcc/O2Rivet}\newline%
+\subtitle{\url{https://github.com/cholmcc/O2Physics/tree/cholmcc_pwgmm_rivet/PWGMM/Rivet}\newline%
   {\footnotesize Including this presentation}}
 \author[C.H.Christensen]{Christian Holm Christensen}
 \institute{\inst{1}Niels Bohr Institute}
@@ -157,7 +158,7 @@
     \item \texttt{MCParticles} to \texttt{HepMC3::GenParticle} and
       \texttt{HepMC3::Vertex}
     \item \texttt{MCCollisions} to event number, and weight
-    \item Ideally, also auxiliary information
+    \item Also auxiliary information
       \begin{itemize}
       \item \texttt{HepMCXSections} to \texttt{HepMC3::CrossSection}
         --- $\sigma$ and $\delta\sigma$, possibly multiple
@@ -166,9 +167,10 @@
       \item \texttt{HepMCHeavyIons} to \texttt{HepMC3::HeavyIon} ---
         event ``geometry'' parameters $N_{\mathrm{coll}}$,
         $N_{\mathrm{part}}$, etc.
-      \item Relevant \Otwo{} merge requests:
-        \href{https://github.com/AliceO2Group/AliceO2/pull/12032}{12032} and
-        \href{https://github.com/AliceO2Group/AliceO2/pull/12039}{12039}
+      \item Relevant \Otwo{} commits: MR
+        \href{https://github.com/AliceO2Group/AliceO2/pull/12032/commits}{\#
+          12032} and
+        \href{https://github.com/AliceO2Group/AliceO2/commit/d3bcb9d5c98a14618e100c4d476103b8f5989ae1}{d3bcb9d}
       \end{itemize}
     \end{itemize}
   \item<+-> Pass \texttt{HepMC3::GenEvent} to \Rivet{} Manager
@@ -185,6 +187,9 @@
     \begin{itemize}
     \item Including cases where the AOs where merged from multiple
       jobs --- e.g., Grid execution
+    \item To be done ``by-hand'' by user. \newline
+      {\footnotesize \alert{No \texttt{Terminate} method available in
+          \Otwo{}} --- regression. }
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -199,8 +204,8 @@
   \end{center}
   EPOS-LHC pp at $\sqrt{s}=\TeV[7]$
 
-  {\footnotesize Visualised by \texttt{tools/hepmc.py} in
-    \href{https://gitlab.com/cholmcc/O2Rivet}{project}.}
+  {\footnotesize Visualised by \texttt{Tools/hepmc.py} in
+    \href{https://github.com/cholmcc/O2Physics/tree/cholmcc_pwgmm_rivet/PWGMM/Rivet}{project}.}
 \end{frame}
 
 \begin{frame}
@@ -231,12 +236,13 @@
       \begin{itemize}
       \item<+-> Done by ``helper'' class
         \texttt{o2::eventgen::AODToHepMC} in
-        \href{https://github.com/cholmcc/AliceO2/blob/cholmcc_aod_to_hepmc/Generators/include/Generators/AODToHepMC.h}{\texttt{AODToHepMC.h}}
+        \href{https://github.com/AliceO2Group/AliceO2/blob/dev/Generators/include/Generators/AODToHepMC.h}{\texttt{AODToHepMC.h}}
         and
-        \href{https://github.com/cholmcc/AliceO2/blob/cholmcc_aod_to_hepmc/Generators/src/AODToHepMC.cxx}{\texttt{AODToHepMC.cxx}}
+        \href{https://github.com/AliceO2Group/AliceO2/blob/dev/Generators/src/AODToHepMC.cxx}{\texttt{AODToHepMC.cxx}}
         \newline%
-        {\footnotesize Relevant \Otwo{} merge request:
-          \href{https://github.com/AliceO2Group/AliceO2/pull/12038}{12038}}
+        {\footnotesize Relevant \Otwo{} commits:
+          \href{https://github.com/AliceO2Group/AliceO2/pull/12038/commits}{MR
+            \# 12038}}
       \item<+-> Reads in \AOD{} tables
         \begin{itemize}
         \item \texttt{MCParticles}
@@ -291,23 +297,17 @@
           \end{scope}
           \draw[con,hide,only={<3->{show}}] (mcpart)--(part);
           \draw[con,hide,only={<3->{show}}] (mcpart)--(vrtx);
-          \draw[con,hide,only={<3->{show}},dashed] (mcxsec)--(xsec) node[midway,above]{?};
-          \draw[con,hide,only={<3->{show}},dashed] (mcpdfs)--(pdfi) node[pos=.35,above]{?};
-          \draw[con,hide,only={<3->{show}},dashed] (mchvyi)--(hvyi) node[pos=.35,above]{?};
-          \draw[con,hide,only={<3->{show}},dashed] (mccoll)--(hep);
+          \draw[con,hide,only={<3->{show}}] (mcxsec)--(xsec);
+          \draw[con,hide,only={<3->{show}}] (mcpdfs)--(pdfi);
+          \draw[con,hide,only={<3->{show}}] (mchvyi)--(hvyi);
+          \draw[con,hide,only={<3->{show}}] (mccoll)--(hep);
         \end{tikzpicture}
       \end{center}
       \vspace*{1ex} \uncover<3->{
         %% Linter wants space before parenthesis - may be entirely
-        %% wrong here. 
-        \tikz[baseline={ (0,-.1)}]{\draw[con,dashed] (0,0) to (.4,0);} not
-        available in \texttt{o2-aod-mc-producer-workflow}, but
-        somewhat with \texttt{o2-sim-mctracks-to-aod}.\newline%
-        {\footnotesize Relevant \Otwo{} merge requests:
-          \href{https://github.com/AliceO2Group/AliceO2/pull/12032}{12032}
-          and
-          \href{https://github.com/AliceO2Group/AliceO2/pull/12039}{12039}
-        } }
+        %% wrong here.
+        Recent upgrade to \Otwo{} fixes all paths for ``official''
+        productions.}
     \end{column}
   \end{columns}
 \end{frame}
@@ -323,15 +323,15 @@
       \begin{itemize}
       \item<+-> Done by ``helper'' class \texttt{o2::rivet::Wrapper}
         in
-        \href{https://gitlab.com/cholmcc/O2Rivet/-/blob/master/O2RivetWrapper.h}{\texttt{O2RivetWrapper.h}}
+        \href{https://https://github.com/cholmcc/O2Physics/tree/cholmcc_pwgmm_rivet/PWGMM/Rivet/Tasks/Wrapper.h}{\texttt{O2RivetWrapper.h}}
       \item<+-> Holds a \texttt{Rivet::AnalysisHandler} object
       \item<+-> Get in-memory \texttt{HepMC3::GenEvent} (from
         \texttt{AODToHepMC}).
       \item<+-> Executes registered analyses passing event to
         \texttt{Rivet::Analysis::event}
       \item<+-> At end of job, stores \Yoda{} AOs in
-        \texttt{o2::rivet::Output}
-        (\href{https://gitlab.com/cholmcc/O2Rivet/-/blob/master/O2RivetOutput.h}{\texttt{O2RivetOutput.h}})
+        \texttt{o2::rivet::RivetAOs}
+        (\href{https://https://github.com/cholmcc/O2Physics/tree/cholmcc_pwgmm_rivet/PWGMM/Rivet/DataModel/RivetAOs.h}{\texttt{RivetAOs.h}})
         object written to \texttt{AnalysisResults.root} file.
         \begin{itemize}
         \item<+-> This uses a hack by registering a
@@ -371,7 +371,7 @@
   \frametitle{\Rivet{} wrapper}
 
   ``Helper'' class \texttt{o2::rivet::Wrapper} in
-  \href{https://gitlab.com/cholmcc/O2Rivet/-/blob/master/O2RivetWrapper.h}{\texttt{O2RivetWrapper.h}}
+  \href{https://https://github.com/cholmcc/O2Physics/tree/cholmcc_pwgmm_rivet/PWGMM/Rivet/Tasks/Wrapper.h}{\texttt{Wrapper.h}}
 
   \begin{columns}[onlytextwidth,t]
     \begin{column}{.45\linewidth}
@@ -408,8 +408,8 @@
 \begin{frame}
   \frametitle{\Rivet{} results}
   \begin{itemize}
-  \item<+-> \texttt{o2::rivet::Output}
-    (\href{https://gitlab.com/cholmcc/O2Rivet/-/blob/master/O2RivetOutput.h}{\texttt{O2RivetOutput.h}})
+  \item<+-> \texttt{o2::rivet::RivetAOs}
+    (\href{https://https://github.com/cholmcc/O2Physics/tree/cholmcc_pwgmm_rivet/PWGMM/Rivet/Tasks/Wrapper.h}{\texttt{RivetAOs.h}})
     \begin{itemize}
     \item<+-> Contains \Yoda{} AOs streamed to a string
     \item<+-> Stores load paths, needed by merge\newline%
@@ -435,18 +435,20 @@
 
   \begin{itemize}
   \item<+-> \texttt{o2-analysis-mm-rivet} in
-    (\href{https://gitlab.com/cholmcc/O2Rivet/-/blob/master/o2-analysis-mm-rivet.cc}{\texttt{o2-analysis-mm-rivet.cc}})
+    (\href{https://github.com/cholmcc/O2Physics/tree/cholmcc_pwgmm_rivet/PWGMM/Rivet/Tasks/rivet.cxx}{\texttt{rivet.cxx}})
   \item<+-> Uses objects of ``helper'' classes
     \texttt{o2::eventgen::AODToHepMC} and \texttt{o2::rivet::Wrapper}.
-  \item<+-> Currently \emph{only} reads \AOD{} \texttt{MCCollisions}
+  \item<+-> By default reads \AOD{} \texttt{MCCollisions}
     and \texttt{MCParticles}\newline
-    {\footnotesize Relevant \Otwo{} merge requests:
-      \href{https://github.com/AliceO2Group/AliceO2/pull/12032}{12032}
+    {\footnotesize Relevant \Otwo{} commits:
+      \href{https://github.com/AliceO2Group/AliceO2/pull/12032/commits}{MR
+        \# 12032}
       and
-      \href{https://github.com/AliceO2Group/AliceO2/pull/12039}{12039}
+      \href{https://github.com/AliceO2Group/AliceO2/commit/d3bcb9d5c98a14618e100c4d476103b8f5989ae1}{d3bcb9d}
     }
   \item<+-> \emph{Can} also read in auxiliary \AOD{} tables\newline
-    {\footnotesize Had problems with \texttt{PROCESS\_SWITCH}}
+    {\footnotesize Had problems with \texttt{PROCESS\_SWITCH} --- To
+      be investigated}
   \end{itemize}
 
   \setbeamercolor{block body example}{bg=gray!25!white}
@@ -457,6 +459,8 @@ o2-analysis-mm-rivet --aod-file AO2D.root --rivet-pwd \
   --rivet-sources ALICE_YYYY_I1234567.C
 \end{verbatim}
   \end{exampleblock}
+  \uncover<+->{Note, \OtwoPhysics{} code-checker doesn't like standard
+    ending \texttt{.cc}}
 \end{frame}
 
 %% -------------------------------------------------------------------
@@ -484,8 +488,8 @@ o2-kine-publisher --nevents 100 --o2sim-pid $! --aggregate-timeframe 1 | \
 \end{verbatim}
   \end{exampleblock}
   \uncover<2->{
-    {\footnotesize{} (BTW, it should be \texttt{--noDis{\itshape{}
-          k\/}Output}), see
+    {\footnotesize{} (BTW, it should be
+      \texttt{--noDis{\itshape{}k\/}Output}), see 
       \href{https://www.grammarly.com/blog/disc-disk/}{here} --- So much
       AliNglish.}}
 \end{frame}
@@ -523,10 +527,10 @@ ipython3 -i ALICE_YYYY_I1234567.py finalized.yoda
     \begin{column}{.45\linewidth}
       \begin{block}{Status}
         \begin{itemize}
-        \item<+-> \AOD{} to \HepMC{} done\newline%
-          {\footnotesize \texttt{AODToHepMC}, \Otwo{} merge request
-            \href{https://github.com/AliceO2Group/AliceO2/pull/12038}{12038}}
-        \item<+-> \Rivet{} wrapper on \HepMC{} from \AOD{} done
+        \item<+-> \AOD{} to \HepMC{} done
+        \item<+-> \Rivet{} wrapper on \HepMC{} from \AOD{} done\newline%
+          {\footnotesize \texttt{\OtwoPhysics{} merge request
+            \href{https://github.com/AliceO2Group/O2Physics/pull/4400}{4400}}}
           \begin{itemize}
           \item Specify analyses
           \item Specify load paths
@@ -537,15 +541,12 @@ ipython3 -i ALICE_YYYY_I1234567.py finalized.yoda
             {\footnotesize including
               \texttt{Rivet::Analysis::finalize}}
           \end{itemize}
-        \item<+-> \HepMC{} aux to \texttt{MCEventHeader}: \Otwo{}
-          merge request
-          \href{https://github.com/AliceO2Group/AliceO2/pull/12032}{12032}
-        \item<+-> \HepMC{} aux to \AOD{}: \Otwo{} merge request
-          \href{https://github.com/AliceO2Group/AliceO2/pull/12039}{12039}
+        \item<+-> \HepMC{} aux to \texttt{MCEventHeader} done
+        \item<+-> \HepMC{} aux to \AOD{} done
         \item<+-> Update and deploy \Rivet{} in environments
           \begin{itemize}
           \item \texttt{alidist} merge request
-            \href{https://github.com/alisw/alidist/pull/5171}{5171}
+            \href{https://github.com/alisw/alidist/pull/5320}{5320}
             for CVMFS
           \end{itemize}
         \end{itemize}
@@ -554,7 +555,7 @@ ipython3 -i ALICE_YYYY_I1234567.py finalized.yoda
     \begin{column}{.45\linewidth}
       \begin{alertblock}{Open}
         \begin{itemize}
-        \item<+-> Where to put \texttt{o2-analysis-mm-rivet}?
+        \item<+-> Deploy on HyperLoop.
         \end{itemize}
       \end{alertblock}
       \begin{center}
@@ -577,14 +578,8 @@ ipython3 -i ALICE_YYYY_I1234567.py finalized.yoda
 \begin{frame}
   \frametitle{HepMC auxiliary to \texttt{MCEventHeader}}
 
-  \begin{itemize}[<+->]
-  \item \texttt{GeneratorPythia8} only partially fill in HepMC aux
-  \item \texttt{GeneratorHepMC} fill in nothing
-  \end{itemize}
-
-  \uncover<+->{\alert{\href{https://github.com/AliceO2Group/AliceO2/pull/12032}{Merge
-        request \# 12032} changes that}}
-
+  {Commits of merge request \alert{\href{https://github.com/AliceO2Group/AliceO2/pull/12032/commits}{\# 12032}}}
+  
   \begin{itemize}[<+->]
   \item \texttt{GeneratorPythia8} fill in available HepMC aux\newline
     {\footnotesize Uses different info than \Pythia{} authors use for
@@ -605,14 +600,8 @@ ipython3 -i ALICE_YYYY_I1234567.py finalized.yoda
 \begin{frame}
   \frametitle{HepMC auxiliary to \AOD{}}
 
-  \begin{itemize}[<+->]
-  \item \texttt{o2-aod-mc-producer-workflow},
-    \texttt{o2-aod-producer-workflow}, and \texttt{o2-sim-kine-to-aod}
-    does not fill HepMC aux tables
-  \end{itemize}
-
-  \uncover<+->{\alert{\href{https://github.com/AliceO2Group/AliceO2/pull/12039}{Merge
-        request \# 12039} changes that}}
+  {Commit
+    \alert{\href{https://github.com/AliceO2Group/AliceO2/commit/d3bcb9d5c98a14618e100c4d476103b8f5989ae1}{d3bcb9d}}}:
 
   \begin{itemize}[<+->]
   \item Refactor \texttt{o2-aod-mc-producer-workflow},

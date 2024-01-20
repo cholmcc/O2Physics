@@ -1,9 +1,11 @@
 #!/usr/bin/env -S python -i --
-
-def plotit(infile,raw,save):
+# pyright: basic
+def plotit(infile,raw=False,reference=False,save=False):
     try:
-        from matplotlib.pyplot import gca
-        from yoda import readYODA
+        # pylint: disable=all
+        from matplotlib.pyplot import gca # pyright: ignore
+        from yoda import readYODA # pyright: ignore 
+        from numpy import asarray # pyright: ignore
     except ImportError as e:
         print(e)
         return
@@ -19,7 +21,7 @@ def plotit(infile,raw,save):
     nev   = None
     xsec  = None
 
-    for prefix in ["", "/RAW"]:
+    for prefix in ["", "/RAW", "/REF"]:
         histo = aos.get(prefix+'/ALICE_YYYY_I1234567/d01-x01-y01',None)
         nev   = aos.get(prefix+'/_EVTCOUNT',None)
         xsec  = aos.get(prefix+'/_XSEC',None)
@@ -33,15 +35,15 @@ def plotit(infile,raw,save):
         raise RuntimeError(f'Histogram not found in {infile}')
 
     ax = gca()
-    ax.errorbar(histo.xMids(),
+    ax.errorbar(histo.xVals(),
                 histo.yVals(),
-                histo.yErrs(),
-                histo.xWidths(),
+                asarray(histo.yErrs()).T,
+                asarray(histo.xErrs()).T,
                 'o')
     ax.set_xlabel(r'$\eta$')
     ax.set_ylabel(r'$\mathrm{d}N_{\mathrm{ch}}/\mathrm{d}\eta$')
-    ax.set_title(f'{int(nev.val())} events '
-                 f'{"("+prefix+")" if len(prefix)>0 else ""}')
+    ax.set_title(f'{int(nev.val())} events '  # pyright: ignore
+                 f'{"("+prefix+")" if len(prefix)>0 else ""}') # pyright: ignore
 
     ax.figure.show()
     ax.figure.tight_layout()
@@ -54,7 +56,7 @@ def plotit(infile,raw,save):
 
         ax.figure.savefig(str(pngpath))
 
-
+# --- Entry ----------------------------------------------------------
 if __name__ == '__main__':
     from argparse import ArgumentParser, FileType
 
@@ -64,14 +66,23 @@ if __name__ == '__main__':
                     type=FileType('r'))
     ap.add_argument('-r','--raw',action='store_true',
                     help='Show raw results')
+    ap.add_argument('-R','--reference',action='store_true',
+                    help='Show referene results')
     ap.add_argument('-s','--save',action='store_true',
                     help='Save plot to image file')
 
+    def handle_exit(status=0,message=''):
+        raise RuntimeError(message)
+    ap.exit = handle_exit  # pyright: ignore
+
     try:
         args = ap.parse_args()
-        plotit(args.input,args.raw,args.save)
-    except Exception as e:
-        print(e)
+        plotit(args.input,
+               raw=args.raw,
+               reference=args.reference,
+               save=args.save)
+    except RuntimeError as e:
+        print(e,end='')
 
     print(f'Type Ctrl-D or write exit() to end')
 

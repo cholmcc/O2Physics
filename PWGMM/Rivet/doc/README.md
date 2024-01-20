@@ -140,8 +140,8 @@ on as we thing.
 		  --rivet-pwd					              \
 		  --rivet-sources ALICE_YYYY_I1234567.cc      \
 		  --rivet-load-paths `pwd`/analyses           \
-  	      --rivet-finalize                            \
-          --hepmc-recenter		                      \
+          --rivet-finalize                            \
+          --hepmc-recenter
 
 where `./analysis` is assumed to hold the analysis code
 `ALICE_YYYY_I1234567.cc`, and associated files.

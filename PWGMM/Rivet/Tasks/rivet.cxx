@@ -14,6 +14,7 @@
 #include <Framework/AnalysisTask.h>
 #include <Generators/AODToHepMC.h>
 #include "Wrapper.h"
+// #define RIVET_TASK_AUX
 
 template <typename T>
 using OutputObj = o2::framework::OutputObj<T>;
@@ -22,18 +23,20 @@ using OutputObj = o2::framework::OutputObj<T>;
 using o2::framework::ConfigParamKind;
 using o2::framework::ConfigParamSpec;
 
+#ifndef RIVET_TASK_AUX
 // -------------------------------------------------------------------
 void customize(std::vector<ConfigParamSpec>& workflowOptions)
 {
   using o2::framework::VariantType;
 
-  workflowOptions.emplace_back(ConfigParamSpec{"hepmc-aux", //
-                                               VariantType::Bool,
-                                               false, //
-                                               {"Also process auxiliary "
+  workflowOptions.emplace_back(ConfigParamSpec{"hepmc-aux",               //
+                                               VariantType::Bool,         //
+                                               false,                     //
+                                               {"Also process auxiliary " //
                                                 "HepMC tables"},
                                                ConfigParamKind::kProcessFlag});
 }
+#endif
 
 //--------------------------------------------------------------------
 // This _must_ be included after our "customize" function above, or
@@ -121,18 +124,30 @@ struct Task1 {
   void process(Header const& collision,
                Tracks const& tracks,
                XSections const& xsections,
-               PdfInfos const& pdfs,
-               HeavyIons const& heavyions)
+               PdfInfos const& pdfs
+#ifdef AODTOHEPMC_WITH_HEAVYION
+               ,
+               HeavyIons const& heavyions
+#endif
+  )
   {
     LOG(info) << "=== Processing tracks and auxiliary header information";
     assert(xsections.size() == 1);
     assert(heavyions.size() == 1);
     assert(pdfs.size() == 1);
+
+    mConverter.startEvent();
     mConverter.process(collision,
                        xsections,
-                       pdfs,
-                       heavyions);
+                       pdfs
+#ifdef AODTOHEPMC_WITH_HEAVYION
+                       ,
+                       heavyions
+#endif
+    );
     mConverter.process(collision, tracks);
+    mConverter.endEvent();
+
     mWrapper.process(mConverter.mEvent);
   }
 };
@@ -170,15 +185,30 @@ struct Task2 {
   {
     // processAux(collision, xsections, pdfs, heavyions);
     LOG(info) << "Processing header and tracks";
+    mConverter.startEvent();
     mConverter.process(collision, tracks);
+    mConverter.endEvent();
+
     mWrapper.process(mConverter.mEvent);
   }
 };
 
+#ifdef RIVET_TASK_AUX
 //--------------------------------------------------------------------
 /** Same as @c Task1 above, except the auxiliary information is only
  *  optionally passed.  Does not work for some odd reason.  See also
- *  the applicaiton @c o2-sim-mcevent-to-aod */
+ *  the applicaiton @c o2-sim-mcevent-to-aod
+ *
+ * Actually, it is not likely that this will ever work.  The various
+ * process are done out of sync.  That is, first all input events of
+ * the timeframe are passed to the regular `process` method - i.e.,
+ * tracks and collision headers are processed.  Then all input events
+ * of the timeframe are passed to the optional `processAux` method -
+ * i.e., auxiliary tables and collision headers.
+ *
+ * That means that we cannot correlate the tracks and aux tables into
+ * one event, which is what we need to format a proper HepMC event.
+ */
 struct Task3 {
   using Converter = o2::eventgen::AODToHepMC;
   using Wrapper = o2::rivet::Wrapper;
@@ -233,15 +263,14 @@ struct Task3 {
     mConverter.process(collision, tracks);
     mWrapper.process(mConverter.mEvent);
   }
-#if 0
   decltype(o2::framework::ProcessConfigurable{&Task3::processAux,
                                               "hepmx-auc", false,
                                               "Auxiliary info"})
     doprocessAux = o2::framework::ProcessConfigurable{&Task3::processAux,
                                                       "hepmc-aux", false,
                                                       "Auxillary info"};
-#endif
 };
+#endif
 
 //--------------------------------------------------------------------
 using WorkflowSpec = o2::framework::WorkflowSpec;
@@ -256,11 +285,16 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfg)
   // Task1: One entry: header, tracks, auxiliary
   // Task2: One entry: header, tracks
   // Task3: Two entry: header, tracks, and auxiliary
+#ifdef RIVET_TASK_AUX
+  return WorkflowSpec{
+    adaptAnalysisTask<Task3>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+#else
   if (cfg.options().get<bool>("hepmc-aux"))
     return WorkflowSpec{
       adaptAnalysisTask<Task1>(cfg, TaskName{"o2-analysis-mm-rivet"})};
   return WorkflowSpec{
     adaptAnalysisTask<Task2>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+#endif
 }
 //
 // EOF

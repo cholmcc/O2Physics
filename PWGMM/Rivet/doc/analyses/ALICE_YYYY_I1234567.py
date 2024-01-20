@@ -1,6 +1,6 @@
 #!/usr/bin/env -S python -i --
 
-def plotit(infile,raw):
+def plotit(infile,raw,save):
     from matplotlib.pyplot import gca
     from yoda import readYODA
     from sys import stderr
@@ -41,6 +41,15 @@ def plotit(infile,raw):
     ax.figure.show()
     ax.figure.tight_layout()
 
+    if save:
+        from pathlib import Path
+
+        inpath = Path(infile.name)
+        pngpath = inpath.with_suffix('.png')
+        
+        ax.figure.savefig(str(pngpath))
+        
+
 if __name__ == '__main__':
     from argparse import ArgumentParser, FileType
 
@@ -48,11 +57,16 @@ if __name__ == '__main__':
     ap.add_argument('input',nargs='?',default='AO2D_LHC23d1f_520259_001.yoda',
                     help='Input file',
                     type=FileType('r'))
-    ap.add_argument('-r','--raw',default=False,
+    ap.add_argument('-r','--raw',action='store_true',
                     help='Show raw results')
+    ap.add_argument('-s','--save',action='store_true',
+                    help='Save plot to image file')
 
-    args = ap.parse_args()
-    plotit(args.input,args.raw)
+    try:
+        args = ap.parse_args()
+        plotit(args.input,args.raw,args.save)
+    except Exception as e:
+        print(e)
 
     print(f'Type Ctrl-D or write exit() to end')
 

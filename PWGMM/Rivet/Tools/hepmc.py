@@ -20,6 +20,8 @@
 # Linter insists on spaces between arguments
 # Linter does not like continued lines
 #
+# Flake creates many false-positives - disabled 
+# flake8: noqa
 # pyright: basic,reportOptionalSubscript=false
 """Module to read in HepMC files
 

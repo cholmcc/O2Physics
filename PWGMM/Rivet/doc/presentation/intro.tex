@@ -298,7 +298,9 @@
         \end{tikzpicture}
       \end{center}
       \vspace*{1ex} \uncover<3->{
-        \tikz[baseline={(0,-.1)}]{\draw[con,dashed](0,0) -- (.4,0);} not
+        %% Linter wants space before parenthesis - may be entirely
+        %% wrong here. 
+        \tikz[baseline={ (0,-.1)}]{\draw[con,dashed](0,0) -- (.4,0);} not
         available in \texttt{o2-aod-mc-producer-workflow}, but
         somewhat with \texttt{o2-sim-mctracks-to-aod}.\newline%
         {\footnotesize Relevant \Otwo{} merge requests:
@@ -483,7 +485,7 @@ o2-kine-publisher --nevents 100 --o2sim-pid $! --aggregate-timeframe 1 | \
   \end{exampleblock}
   \uncover<2->{
     {\footnotesize{} (BTW, it should be \texttt{--noDis{\itshape{}
-          k}Output\/}), see
+          k\/}Output}), see
       \href{https://www.grammarly.com/blog/disc-disk/}{here} --- So much
       AliNglish.}}
 \end{frame}

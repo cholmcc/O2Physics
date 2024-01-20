@@ -12,12 +12,6 @@
 #ifndef PWGMM_RIVET_TASKS_WRAPPER_H_
 #define PWGMM_RIVET_TASKS_WRAPPER_H_
 #include "RivetAOs.h"
-#include <Framework/AnalysisManagers.h>
-#include <HepMC3/GenEvent.h>
-#include <Rivet/AnalysisHandler.hh>
-#include <Rivet/Tools/RivetPaths.hh>
-#include <YODA/IO.h>
-#include <filesystem>
 // Linter wants a bunch of header files already included from elsewere
 // - really silly.
 #include <algorithm>
@@ -26,6 +20,13 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <Framework/AnalysisManagers.h>
+#include <HepMC3/GenEvent.h>
+#include <Rivet/AnalysisHandler.hh>
+#include <Rivet/Tools/RivetPaths.hh>
+#include <YODA/IO.h>
+#include <filesystem>
+
 namespace o2
 {
 namespace rivet

@@ -9,10 +9,13 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 //
-#ifdef __ROOTCLING__
+#ifndef PWGMM_RIVET_DATAMODEL_RIVETOUTPUTLINKDEF_H_
+#define PWGMM_RIVET_DATAMODEL_RIVETOUTPUTLINKDEF_H_
+# ifdef __ROOTCLING__
 // #pragma link off all globals;
 // #pragma link off all classes;
 // #pragma link off all functions;
 
 #pragma link C++ class o2::rivet::RivetAOs + ;
-#endif
+# endif
+#endif // PWGMM_RIVET_DATAMODEL_RIVETOUTPUTLINKDEF_H_

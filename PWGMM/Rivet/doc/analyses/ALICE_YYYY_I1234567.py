@@ -4,8 +4,10 @@ def plotit(infile,raw,save):
     try:
         from matplotlib.pyplot import gca
         from yoda import readYODA
-    except Exception as e:
-        raise e
+    except ImportError as e:
+        print(e)
+        return
+    
     from sys import stderr
 
     aos = readYODA(infile)

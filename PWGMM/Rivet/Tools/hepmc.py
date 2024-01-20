@@ -209,7 +209,7 @@ class Reader:
         """
         lineno, tokens = self._tokenize(stream,lineno)
         if not tokens:
-            raise RuntimeError(f'Failed to parse line {%d}',lineno)
+            raise RuntimeError(f'Failed to parse line {lineno}')
         if tokens[0] == 'HepMC::Version':
             self._version = tokens[1]
             return lineno, False
@@ -250,13 +250,19 @@ class Reader:
                 lineno, tokens = self._tokenize(stream, lineno)
                 if not tokens:
                     break
-
-                if   tokens[0] == 'A': self._parse_attribute(lineno,*tokens[1:])
-                elif tokens[0] == 'T': self._parse_tool     (lineno,*tokens[1:])
-                elif tokens[0] == 'W': self._parse_weights  (lineno,*tokens[1:])
-                elif tokens[0] == 'N': self._parse_names    (lineno,*tokens[1:])
-                elif tokens[0] == 'C': self._parse_xsection (lineno,*tokens[1:])
-                elif tokens[0] == 'F': self._parse_pdf      (lineno,*tokens[1:])
+                # Linter doesn't like single-line if's - sigh!
+                if   tokens[0] == 'A':
+                    self._parse_attribute(lineno,*tokens[1:])
+                elif tokens[0] == 'T':
+                    self._parse_tool     (lineno,*tokens[1:])
+                elif tokens[0] == 'W':
+                    self._parse_weights  (lineno,*tokens[1:])
+                elif tokens[0] == 'N':
+                    self._parse_names    (lineno,*tokens[1:])
+                elif tokens[0] == 'C':
+                    self._parse_xsection (lineno,*tokens[1:])
+                elif tokens[0] == 'F':
+                    self._parse_pdf      (lineno,*tokens[1:])
                 elif tokens[0] == 'E':
                     self._parse_info(lineno,*tokens[1:])
                     break
@@ -654,9 +660,12 @@ class Reader:
         tid = int(id)
         a   = {}
         mid = int(aux)
-        if theta != '0': a['theta'] = float(theta)
-        if phi   != '0': a['phi']   = float(phi)
-        if nflow != '0': a['flow']  = [float(f) for f in args]
+        if theta != '0': # Linter doesn't like single-line if's
+            a['theta'] = float(theta)
+        if phi   != '0': # Linter doesn't like single-line if's
+            a['phi']   = float(phi)
+        if nflow != '0': # Linter doesn't like single-line if's
+            a['flow']  = [float(f) for f in args]
         ov  = self._last_vid if self._last_vid != mid else None
         ev  = None if mid == 0 else mid
 
@@ -777,7 +786,8 @@ class Reader:
                    'nspec_p_proj': float(args[off+13]),
                    'nspec_p_targ': float(args[off+14]) })
 
-        if len(args) == off+14+1: return
+        if len(args) == off+14+1:  # Linter doesn't like single-line if's
+            return
 
         n = int(args[off+15])
         hi['planes'] = [float(f) for f in args[off+16:off+16+n]]
@@ -845,15 +855,18 @@ class Reader:
                                 'uncer':   [float(xsecerr)] }
 
 
-        if len(args) <= 0: return;
+        if len(args) <= 0: # Linter doesn't like single-line if's
+            return;
 
         self._event['xsec']['accepted'] = int(args[0])
 
-        if len(args) <= 1: return;
+        if len(args) <= 1: # Linter doesn't like single-line if's
+            return;
 
         self._event['xsec']['attempted'] = int(args[1])
 
-        if len(args) <= 2: return
+        if len(args) <= 2: # Linter doesn't like single-line if's
+            return
 
         self._event['xsec']['value'].append([float(v) for v in args[2::2]])
         self._event['xsec']['uncer'].append([float(u) for u in args[2+1::2]])
@@ -921,8 +934,10 @@ class Reader:
         """
         lst = ' '.join(args).split(r'\|')
         t  = {'name': lst[0]}
-        if len(lst) > 1: t['version']  = lst[1]
-        if len(lst) > 2: t['description'] = lst[2]
+        if len(lst) > 1:  # Linter doesn't like single-line if's
+            t['version']  = lst[1]
+        if len(lst) > 2: # Linter doesn't like single-line if's
+            t['description'] = lst[2]
 
         if self._event is None:
             return
@@ -2147,7 +2162,8 @@ def _ltx2html(l):
     ltx = sub(r"\\prime(.*?)",           r"&#8242;",       ltx)
     ltx = sub(r"\\mathrm\{(.*?)\}",      r"\1",            ltx)
     ltx = sub(r"\\left\[(.*?)\\right\]", r"[\1] ",         ltx)
-    for gl in _greek_letters: ltx = ltx.replace(r"\%s" % gl, "&%s;" % gl)
+    for gl in _greek_letters:  # Linter doesn't like single-line for's
+        ltx = ltx.replace(r"\%s" % gl, "&%s;" % gl)
     ltx = sub(r"\\tilde\{(.*?)\}",       r"\1&#771;",      ltx)
     ltx = sub(r"\\bar\{(.*?)\}",         r"\1&#773;",      ltx)
     ltx = sub(r"\\overline\{(.*?)\}",    r"\1&#773;",      ltx)

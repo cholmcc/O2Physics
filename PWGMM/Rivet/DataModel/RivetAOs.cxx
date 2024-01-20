@@ -10,14 +10,14 @@
 // or submit itself to any jurisdiction.
 //
 #include "RivetAOs.h"
+#include <vector>
+#include <string>
 #include <TSystem.h>
 #include <TClass.h>
 #include <Rivet/AnalysisHandler.hh>
 #include <Rivet/Tools/RivetPaths.hh>
 #include <YODA/IO.h>
 // Sigh - linter needs additional headers already included
-#include <vector>
-#include <string>
 
 namespace o2
 {
@@ -76,10 +76,12 @@ void RivetAOs::merge(o2::mergers::MergeInterface* const other)
                              "of class RivetAOs");
   }
   std::vector<std::string> tmps;
-  if (!mData.GetString().IsNull()) {  // Sigh - annoying linter prefers `!` over `not`
+  // Sigh - annoying linter prefers `!` over `not`
+  if (!mData.GetString().IsNull()) {
     tmps.push_back(WriteTmp());
   }
-  if (!o->Data().IsNull()) {  // Sigh - annoying linter prefers `!` over `not`
+  // Sigh - annoying linter prefers `!` over `not`
+  if (!o->Data().IsNull()) {
     tmps.push_back(o->WriteTmp());
   }
 

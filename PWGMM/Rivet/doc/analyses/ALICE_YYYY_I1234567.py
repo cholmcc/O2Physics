@@ -38,7 +38,7 @@ def plotit(infile, raw=False, reference=False, save=False):
     ax = gca()
     ax.errorbar(histo.xVals(),            # Do not
                 histo.yVals(),            # mess
-                asarray(histo.yErrs()).T, # with 
+                asarray(histo.yErrs()).T, # with
                 asarray(histo.xErrs()).T, # my
                 "o"                       # formatting
     )
@@ -47,7 +47,7 @@ def plotit(infile, raw=False, reference=False, save=False):
     ax.set_title(
         f"{int(nev.val())} events "  # pyright: ignore
         f'{"("+prefix+")" if len(prefix)>0 else ""}' # pyright: ignore
-    )  
+    )
 
     ax.figure.show()
     ax.figure.tight_layout()
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     ap = ArgumentParser(description="Plot results")
     ap.add_argument("input",                                 # Keep your
                     nargs="?",                               # hands off
-                    default="AO2D_LHC23d1f_520259_001.yoda", # my 
+                    default="AO2D_LHC23d1f_520259_001.yoda", # my
                     help="Input file",                       # code
                     type=FileType("r"))
     ap.add_argument("-r",                # Keep your
@@ -77,11 +77,11 @@ if __name__ == "__main__":
                     help="Show raw results")
     ap.add_argument("-R",                # Keep your
                     "--reference",       # hands off
-                    action="store_true", # my code  
+                    action="store_true", # my code
                     help="Show referene results")
     ap.add_argument("-s",                # Keep your
                     "--save",            # hands off
-                    action="store_true", # my code  
+                    action="store_true", # my code
                     help="Save plot to image file")
 
     def handle_exit(status=0, message=""):

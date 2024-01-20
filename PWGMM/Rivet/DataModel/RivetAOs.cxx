@@ -10,13 +10,13 @@
 // or submit itself to any jurisdiction.
 //
 #include "RivetAOs.h"
-#include <vector>
-#include <string>
+#include <YODA/IO.h>
 #include <TSystem.h>
 #include <TClass.h>
+#include <vector>
+#include <string>
 #include <Rivet/AnalysisHandler.hh>
 #include <Rivet/Tools/RivetPaths.hh>
-#include <YODA/IO.h>
 // Sigh - linter needs additional headers already included
 
 namespace o2
@@ -91,12 +91,12 @@ void RivetAOs::merge(o2::mergers::MergeInterface* const other)
       Warning("Merge", "Does not exist!");
     }
   }
-  
+
   for (auto o : mLoadPaths) {
     Rivet::addAnalysisLibPath(o->GetName());
     Rivet::addAnalysisDataPath(o->GetName());
   }
-  
+
   Rivet::AnalysisHandler ah("");
   if (MergeYoda(ah, tmps, mEquivalent, true) <= 0)
     throw std::runtime_error("Failed to merge YODA outputs");

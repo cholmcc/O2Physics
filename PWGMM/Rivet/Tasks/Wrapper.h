@@ -14,18 +14,18 @@
 #include "RivetAOs.h"
 // Linter wants a bunch of header files already included from elsewere
 // - really silly.
+#include <YODA/IO.h>
+#include <Framework/AnalysisManagers.h>
+#include <HepMC3/GenEvent.h>
 #include <algorithm>
 #include <list>
 #include <string>
 #include <memory>
 #include <vector>
 #include <map>
-#include <Framework/AnalysisManagers.h>
-#include <HepMC3/GenEvent.h>
+#include <filesystem>
 #include <Rivet/AnalysisHandler.hh>
 #include <Rivet/Tools/RivetPaths.hh>
-#include <YODA/IO.h>
-#include <filesystem>
 
 namespace o2
 {

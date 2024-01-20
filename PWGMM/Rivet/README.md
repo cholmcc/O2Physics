@@ -28,7 +28,7 @@ separate jobs or as part of a larger pipeline.
   `o2::rivet::RivetAOs`
 - [`Tasks`](Tasks): The DPL `o2-analysis-mm-rivet`
 - [`macros`](macros):  Some utility ROOT scripts
-- [`tools`](tools): Other utility scripts
+- [`Tools`](Tools): Other utility scripts
 
 <!-- EOF -->
 

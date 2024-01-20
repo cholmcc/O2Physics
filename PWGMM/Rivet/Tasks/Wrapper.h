@@ -9,16 +9,23 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 //
-#ifndef O2RivetWrapper_h
-#define O2RivetWrapper_h
+#ifndef PWGMM_RIVET_TASKS_WRAPPER_H_
+#define PWGMM_RIVET_TASKS_WRAPPER_H_
+#include "RivetAOs.h"
 #include <Framework/AnalysisManagers.h>
 #include <HepMC3/GenEvent.h>
 #include <Rivet/AnalysisHandler.hh>
 #include <Rivet/Tools/RivetPaths.hh>
 #include <YODA/IO.h>
-#include "RivetAOs.h"
 #include <filesystem>
-
+// Linter wants a bunch of header files already included from elsewere
+// - really silly.
+#include <algorithm>
+#include <list>
+#include <string>
+#include <memory>
+#include <vector>
+#include <map>
 namespace o2
 {
 namespace rivet
@@ -246,7 +253,9 @@ struct Wrapper {
    */
   void process(const Event& event)
   {
-    if (not mHandler) {
+    if (!mHandler) { // I prefer to use `not` instead of `!` but
+                     // linter apparently likes to use the less-clear
+                     // operator - sigh!
       initHandler();
       mHandler->init(event);
     }
@@ -260,7 +269,9 @@ struct Wrapper {
    */
   void postRun()
   {
-    if (not mHandler) {
+    if (!mHandler) { // I prefer to use `not` instead of `!` but
+                     // linter apparently likes to use the less-clear
+                     // operator - sigh!
       LOG(warning) << "No handler, nothing to do";
       return;
     }
@@ -388,4 +399,4 @@ struct OptionManager<o2::rivet::Wrapper> {
 
 } // namespace o2
 
-#endif
+#endif // PWGMM_RIVET_TASKS_WRAPPER_H_

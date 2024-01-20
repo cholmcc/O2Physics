@@ -1,8 +1,11 @@
 #!/usr/bin/env -S python -i --
 
 def plotit(infile,raw,save):
-    from matplotlib.pyplot import gca
-    from yoda import readYODA
+    try:
+        from matplotlib.pyplot import gca
+        from yoda import readYODA
+    except Exception as e:
+        raise e
     from sys import stderr
 
     aos = readYODA(infile)

@@ -9,11 +9,13 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 //
-#ifndef O2Physics_PWGMM_Rivet_RivetAOs_h
-#define O2Physics_PWGMM_Rivet_RivetAOs_h
+#ifndef PWGMM_RIVET_DATAMODEL_RIVETAOS_H_
+#define PWGMM_RIVET_DATAMODEL_RIVETAOS_H_
 #include <TObject.h>
 #include <TList.h>
 #include <TObjString.h>
+#include <vector>
+#include <string>
 // #include <Mergers/MergeInterface.h>
 
 // Forward declaration
@@ -161,7 +163,7 @@ class RivetAOs : public TObject //, public o2::mergers::MergeInterface
 };
 } // namespace rivet
 } // namespace o2
-#endif
+#endif // PWGMM_RIVET_DATAMODEL_RIVETAOS_H_
 //
 // EOF
 //

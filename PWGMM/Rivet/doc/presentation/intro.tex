@@ -74,7 +74,7 @@
 \place{PWGMM/MC}
 %% === The document ==================================================
 \begin{document}
-\aliceTitlePage
+\aliceTitlePage{}
 %% ===================================================================
 \begin{frame}
   \frametitle{Overview}
@@ -298,7 +298,7 @@
         \end{tikzpicture}
       \end{center}
       \vspace*{1ex} \uncover<3->{
-        \tikz[baseline={(0,-.1)}]{\draw[con,dashed](0,0)--(.4,0);} not
+        \tikz[baseline={(0,-.1)}]{\draw[con,dashed](0,0) -- (.4,0);} not
         available in \texttt{o2-aod-mc-producer-workflow}, but
         somewhat with \texttt{o2-sim-mctracks-to-aod}.\newline%
         {\footnotesize Relevant \Otwo{} merge requests:
@@ -381,7 +381,7 @@
       \item<+-> Can compile source files to shared library \newline
         {\footnotesize E.g., upload analysis source and build in
           target environment}
-      \item<+-> ... and more
+      \item<+-> \textellipsis{} and more
       \end{itemize}
     \end{column}
     \begin{column}{.45\linewidth}
@@ -482,8 +482,8 @@ o2-kine-publisher --nevents 100 --o2sim-pid $! --aggregate-timeframe 1 | \
 \end{verbatim}
   \end{exampleblock}
   \uncover<2->{
-    {\footnotesize (BTW, it should be \texttt{--noDis{\itshape
-          k}Output}), see
+    {\footnotesize{} (BTW, it should be \texttt{--noDis{\itshape{}
+          k}Output\/}), see
       \href{https://www.grammarly.com/blog/disc-disk/}{here} --- So much
       AliNglish.}}
 \end{frame}

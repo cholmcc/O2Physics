@@ -25,6 +25,10 @@ This supports both
 
 """
 
+# Linter insists this must be on top 
+from contextlib import AbstractContextManager
+
+
 # ====================================================================
 def make_iter(c):
     if isinstance(c,list):
@@ -204,6 +208,8 @@ class Reader:
             True when `HepMC::Asciiv3-START_EVENT_LISTING` is seen
         """
         lineno, tokens = self._tokenize(stream,lineno)
+        if not tokens:
+            raise RuntimeError(f'Failed to parse line {%d}',lineno)
         if tokens[0] == 'HepMC::Version':
             self._version = tokens[1]
             return lineno, False
@@ -300,7 +306,8 @@ class Reader:
                      signal_id,signal_vertex,nvertices,beam1,beam2,*args):
         """Read header line with the format
 
-            event_number mpi scale alpha_qcd alpha_qed signal_id signal_vertex n_vertices beam1 beam2 [n_random [random]] [n_weights [weights]]
+            event_number mpi scale alpha_qcd alpha_qed signal_id signal_vertex
+                n_vertices beam1 beam2 [n_random [random]] [n_weights [weights]]
 
         Parameters
         ----------
@@ -491,11 +498,10 @@ class Reader:
         vid     = int(sid)
         st      = int(status)
         pos     = [float(x),float(y),float(z),float(t)]
-        np      = int(n_out)
         nw      = int(n_weights)
         w       = {} if nw < 1 else {'weights':[float(w) for w in args]}
-        v       = self._make_vertex(vid=vid,status=st,position=pos,
-                                    attributes=w)
+
+        self._make_vertex(vid=vid,status=st,position=pos,  attributes=w)
 
         self._last_vid = vid
 
@@ -522,7 +528,6 @@ class Reader:
         """
         vid     = int(sid)
         st      = int(status)
-        get_pos = lambda *args: [float(c) for c in args[:4]]
         v       = self._make_vertex(vid=vid,status=st)
         if len(args) > 0:
             poff = 0
@@ -654,17 +659,18 @@ class Reader:
         if nflow != '0': a['flow']  = [float(f) for f in args]
         ov  = self._last_vid if self._last_vid != mid else None
         ev  = None if mid == 0 else mid
-        p   = self._make_particle(pid        = tid,
-                                  origin     = ov,
-                                  end        = ev,
-                                  pdg        = int(pid),
-                                  momentum   = [float(px),
-                                                float(py),
-                                                float(pz),
-                                                float(e)],
-                                  mass       = float(m),
-                                  status     = int(status),
-                                  attributes = a)
+
+        self._make_particle(pid        = tid,
+                            origin     = ov,
+                            end        = ev,
+                            pdg        = int(pid),
+                            momentum   = [float(px),
+                                          float(py),
+                                          float(pz),
+                                          float(e)],
+                            mass       = float(m),
+                            status     = int(status),
+                            attributes = a)
 
     # ----------------------------------------------------------------
     def _parse_particle3(self,lineno,sid,aux,pid,px,py,pz,e,m,status,*args):
@@ -698,16 +704,17 @@ class Reader:
         self._assert_no_garbage(lineno, 'particle', args)
 
         tid = int(sid)
-        p   = self._make_particle(pid       = tid,
-                                  origin    = int(aux),
-                                  end       = None,
-                                  pdg       = int(pid),
-                                  momentum  = [float(px),
-                                               float(py),
-                                               float(pz),
-                                               float(e)],
-                                  mass      = float(m),
-                                  status    = int(status))
+
+        self._make_particle(pid       = tid,
+                            origin    = int(aux),
+                            end       = None,
+                            pdg       = int(pid),
+                            momentum  = [float(px),
+                                         float(py),
+                                         float(pz),
+                                         float(e)],
+                            mass      = float(m),
+                            status    = int(status))
 
 
     # ----------------------------------------------------------------
@@ -735,7 +742,7 @@ class Reader:
         if not args[0].startswith('v') or args[0] == 'v0':
             vers = 0
             off  = args[0] == 'v0'
-
+            
         self._event['heavyion'] = {'ncoll_hard': int(args[off+0]),
                                    'npart_proj': int(args[off+1]),
                                    'npart_targ': int(args[off+2]),
@@ -873,7 +880,7 @@ class Reader:
         if self._event is not None:
             try:
                 self._event['weights'] = [float(w) for w in args]
-            except:
+            except Exception: # Linter doesn't like bare `except` - sigh!
                 self._event['weights'] = [w for w in args]
         else:
             self._weights = [*args]
@@ -912,10 +919,10 @@ class Reader:
         args : tuple of str
             Weight names of values
         """
-        l = ' '.join(args).split(r'\|')
-        t = {'name': l[0]}
-        if len(l) > 1: t['version']  = l[1]
-        if len(l) > 2: t['description'] = l[2]
+        lst = ' '.join(args).split(r'\|')
+        t  = {'name': lst[0]}
+        if len(lst) > 1: t['version']  = lst[1]
+        if len(lst) > 2: t['description'] = lst[2]
 
         if self._event is None:
             return
@@ -1143,8 +1150,6 @@ class Reader:
 
 
 # ====================================================================
-from contextlib import AbstractContextManager
-
 class HepMCInput(AbstractContextManager):
     # ----------------------------------------------------------------
     class EventIterator:
@@ -2124,7 +2129,7 @@ _greek_letters = [
     "Xi",
     "Zeta",
 ]
-_greek_letters += [l.lower() for l in _greek_letters]
+_greek_letters += [let.lower() for let in _greek_letters]
 
 # --------------------------------------------------------------------
 def _greek_unicode(let):
@@ -2137,370 +2142,16 @@ def _greek_unicode(let):
 def _ltx2html(l):
     from re import sub
 
-    l = sub(r"\^\{(.*?)\}",            r"<SUP>\1</SUP>", l)
-    l = sub(r"\_\{(.*?)\}",            r"<SUB>\1</SUB>", l)
-    l = sub(r"\\prime(.*?)",           r"&#8242;",       l)
-    l = sub(r"\\mathrm\{(.*?)\}",      r"\1",            l)
-    l = sub(r"\\left\[(.*?)\\right\]", r"[\1] ",         l)
-    for gl in _greek_letters: l = l.replace(r"\%s" % gl, "&%s;" % gl)
-    l = sub(r"\\tilde\{(.*?)\}",       r"\1&#771;",      l)
-    l = sub(r"\\bar\{(.*?)\}",         r"\1&#773;",      l)
-    l = sub(r"\\overline\{(.*?)\}",    r"\1&#773;",      l)
-    return l
-
-# ====================================================================
-class FourVector:
-    def __init__(self,x,y,z,t):
-        from numpy import array
-        self._v = array([x,y,z,t])
-
-    @property
-    def x(self):
-        """X coordinate"""
-        return self._v[0]
-    @property
-    def y(self):
-        """Y coordinate"""
-        return self._v[1]
-    @property
-    def z(self):
-        """Z coordinate"""
-        return self._v[2]
-    @property
-    def t(self):
-        """Time coordinate"""
-        return self._v[3]
-
-    @x.setter
-    def x(self,x):
-        self._v[0] = x
-    @y.setter
-    def y(self,y):
-        self._v[1] = y
-    @z.setter
-    def z(self,z):
-        self._v[2] = z
-    @t.setter
-    def t(self,t):
-        self._v[3] = t
-
-    @property
-    def v(self):
-        """Array """
-        return self._v
-    @v.setter
-    def v(self,v):
-        try:
-            assert len(v) == 4, f'Incorrect size of vector'
-        except:
-            raise
-
-        self._v = v
-
-    @property
-    def r2(self):
-        """Square radius"""
-        return (self._v[:-1]**2).sum()
-    @property
-    def r(self):
-        """Radius"""
-        from numpy import sqrt
-        return sqrt(self.r2)
-
-    @property
-    def perp2(self):
-        """Perpendicular radius squared"""
-        return (self._v[:-2]**2).sum()
-    @property
-    def perp(self):
-        """Perpendicular radius"""
-        from numpy import sqrt
-        return sqrt(self.perp2)
-
-    @property
-    def mag2(self):
-        """Invariant magnitude squared"""
-        return self.t**2 - self.r2
-    @property
-    def mag(self):
-        """Invariant magnitude"""
-        from numpy import sqrt, abs, sign
-        m2 = self.mag2
-        return sign(m2) * sqrt(abs(m2))
-
-    @property
-    def phi(self):
-        """Azimuth angle"""
-        from numpy import arctan2
-        return arctan2(self.y, self.x)
-    @property
-    def theta(self):
-        """Polar angle"""
-        from numpy import arctan2
-        return arctan2(self.perp, self.z)
-
-    px  = x
-    """Momentum along X"""
-    py  = y
-    """Momentum along Y"""
-    pz  = z
-    """Momentum along Z"""
-    e   = t
-    """Total energy"""
-    pt  = perp
-    """Transverse momentum"""
-    pt2 = perp2
-    """Square transverse momentum"""
-    m   = mag
-    """Invariant mass"""
-    m2  = mag2
-    """Square invariant mass"""
-    p   = r
-    """Momentum"""
-    p2  = r2
-    """Square momentum"""
-
-    @property
-    def eta(self):
-        """Pseudorapidity"""
-        from numpy import log
-        return log((self.p + self.pz) / (self.p - self.pz)) / 2
-    @property
-    def rap(self):
-        """Rapidity"""
-        from numpy import log
-        return log((self.e + self.pz) / (self.e - self.pz)) / 2
-
-    def __len__(self):
-        return len(self._v)
-
-    def __repr__(self):
-        """Representation"""
-        return f'[{self.x},{self.y},{self.z},{self.t}]'
-
-# --------------------------------------------------------------------
-class Particle:
-    def __init__(self):
-        self._id         = None
-        self._pid        = None
-        self._status     = None
-        self._momentum   = FourVector(0,0,0,0)
-        self._origin     = None
-        self._end        = None
-        self._attributes = {}
-
-    @property
-    def id(self):
-        """Particle number"""
-        return self._id
-    @property
-    def pid(self):
-        """Particle type identifier"""
-        return self._pid
-    @property
-    def status(self):
-        """Particle status"""
-        return self._status
-    @property
-    def momentum(self):
-        """Momentum"""
-        return self._momentum
-    @property
-    def origin(self):
-        """Origin vertex"""
-        return self._origin
-    @property
-    def end(self):
-        """End vertex"""
-        return self._end
-    @property
-    def attributes(self):
-        """Attributes"""
-        return self._attributes
-
-    @classmethod
-    def from_dict(cls,d):
-        o             = cls()
-        o._id         = d.get('id',        None)
-        o._pid        = d.get('pid',       None)
-        o._status     = d.get('status',    None)
-        o._momentum   = d.get('momentum',  [0,0,0,0])
-        o._attributes = d.get('attributes',{}).copy()
-        return o
-
-    def _set_origin(self,v,add=True):
-        self._origin = v
-        if add:
-            v.add_outgoing(self)
-
-    def _set_end(self,v,add=True):
-        self._end = v
-        if add:
-            v.add_incoming(self)
-
-    def __repr__(self):
-        return f'{self.id:6d} {self.pid:10d} {self.momentum}'
-
-# --------------------------------------------------------------------
-class Vertex:
-    def __init__(self):
-        self._id          = id
-        self._position    = FourVector(0,0,0,0)
-        self._status      = None
-        self._incoming    = []
-        self._outgoing    = []
-        self._level       = -1;
-
-    @property
-    def id(self):
-        """Particle number"""
-        return self._id
-    @property
-    def status(self):
-        """Particle status"""
-        return self._status
-    @property
-    def position(self):
-        """Position"""
-        return self._position
-    @property
-    def incoming(self):
-        """Incoming particle"""
-        return self._incoming
-    @property
-    def outgoing(self):
-        """Incoming particle"""
-        return self._outgouing
-    @property
-    def attributes(self):
-        """Attributes"""
-        return self._attributes
-
-    @property
-    def level(self):
-        """Level in tree"""
-        return self._level
-
-    def calc_level(self):
-        if self._level >= 0:
-            return
-
-        for p in self._incoming:
-            if p.origin is not None:
-                p.origin.calc_level()
-
-            self._level = max(self.level,p.origin.level)
-
-
-    def add_incoming(self,p):
-        """Add incoming particle"""
-        if p not in self._incoming:
-            self._incoming.append(p)
-
-        if p.origin is not self:
-            p._set_origin(self,False)
-
-    def add_outgoing(self,p):
-        """Add outcoming particle"""
-        if p not in self._outgoing:
-            self._outgoing.append(p)
-
-        if p.end is not self:
-            p._set_end(self,False)
-
-    def __repr__(self):
-        return f'{self.id:6d} {self.status:6d} @ {self.position}'
-
-    @classmethod
-    def from_dict(cls,d):
-        o             = cls()
-        o._id         = d.get('id',        None)
-        o._status     = d.get('status',    None)
-        o._position   = d.get('position',  [0,0,0,0])
-        o._attributes = d.get('attributes',{}).copy()
-        return o
-
-# --------------------------------------------------------------------
-class Event:
-    def __init__(self):
-        self._number    = 0
-        self._vertices  = {}
-        self._particles = {}
-
-    @property
-    def number(self):
-        """Event number"""
-        return self._number
-    @property
-    def vertices(self):
-        """Vertices"""
-        return self._vertices.values()
-    @property
-    def particles(self):
-        """Particles"""
-        return self._particles.values()
-
-
-    def _particle(self,pid,d):
-        if pid not in self._particles:
-            p = Particle.from_dict(d['particles'][pid])
-            self._particles[pid] = p
-
-        return self._particles[pid]
-
-    def _decode(self,d):
-        self._number = d.get('id',0)
-
-        for vid, vd in make_iter(d['vertices']):
-            v                   = Vertex.from_dict(vd)
-            self._vertices[vid] = v
-
-            for pid in vd['incoming']:
-                p = self._particle(pid,d)
-                p._set_end(v)
-
-            for pid in vd['outgoing']:
-                p = self._particle(pid,d)
-                p._set_origin(v)
-
-        assert len(d['vertices']) == len(self._vertices), \
-            f'Inconsistent number of vertices - was {len(d["vertices"])} '+\
-            f' found {len(self._vertices)}'
-
-        assert len(d['particles']) == len(self._particles), \
-            f'Inconsistent number of particles - was {len(d["particles"])} '+\
-            f' found {len(self._particles)}'
-
-        for pid,p in self._particles.items():
-            assert p.origin is not None or p.status == 4, \
-                f'Particle {pid} has no origin and is not beam'
-
-            assert p.end is not None or p.status == 1, \
-                f'Particle {pid} has no end and is not final state'
-
-        for vid,v in enumerate(self._vertices[vid]):
-            v.calc_level()
-
-
-    @classmethod
-    def from_dict(cls,d):
-        o = cls()
-        o._decode(d)
-        return o
-
-
-
-
-
-# ====================================================================
-class Dump:
-    def __init__(self):
-        pass
-
-    def dump(self,ev):
-        beams = []
-
-        # for pid,p in enumerate(ev['particles']):
+    ltx = sub(r"\^\{(.*?)\}",            r"<SUP>\1</SUP>", ltx)
+    ltx = sub(r"\_\{(.*?)\}",            r"<SUB>\1</SUB>", ltx)
+    ltx = sub(r"\\prime(.*?)",           r"&#8242;",       ltx)
+    ltx = sub(r"\\mathrm\{(.*?)\}",      r"\1",            ltx)
+    ltx = sub(r"\\left\[(.*?)\\right\]", r"[\1] ",         ltx)
+    for gl in _greek_letters: ltx = ltx.replace(r"\%s" % gl, "&%s;" % gl)
+    ltx = sub(r"\\tilde\{(.*?)\}",       r"\1&#771;",      ltx)
+    ltx = sub(r"\\bar\{(.*?)\}",         r"\1&#773;",      ltx)
+    ltx = sub(r"\\overline\{(.*?)\}",    r"\1&#773;",      ltx)
+    return ltx
 
 # ====================================================================
 class Graph:
@@ -2540,7 +2191,7 @@ class Graph:
         return _ltx2html(ltx)
 
     def edge(self,dot,start,end,particle):
-        from numpy import log
+        from math import log
 
         e     = particle['momentum'][3]
         elog  = 0 if e <= 0 else log(e)
@@ -2583,7 +2234,13 @@ class Graph:
         v :
              ?
          """
-        from numpy import asarray, isclose, sqrt, sum
+        try:
+            from numpy import asarray, sum
+        except Exception as e:
+            raise e
+        
+        from math import sqrt
+            
 
         attrs = {'shape': 'point' if vertex is None else 'circle' }
         label = f''
@@ -2647,7 +2304,10 @@ class Graph:
         ev : Event
              The event
         """
-        from graphviz import Digraph
+        try:
+            from graphviz import Digraph
+        except Exception as e:
+            raise e
 
         dot = Digraph(name=f'{self._prefix}_event{no:06d}',
                       comment=f'{self._prefix} Event # {event["number"]}')

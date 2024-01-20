@@ -124,12 +124,8 @@ struct Task1 {
   void process(Header const& collision,
                Tracks const& tracks,
                XSections const& xsections,
-               PdfInfos const& pdfs
-#ifdef AODTOHEPMC_WITH_HEAVYION
-               ,
-               HeavyIons const& heavyions
-#endif
-  )
+               PdfInfos const& pdfs,
+               HeavyIons const& heavyions)
   {
     LOG(info) << "=== Processing tracks and auxiliary header information";
     assert(xsections.size() == 1);
@@ -137,14 +133,10 @@ struct Task1 {
     assert(pdfs.size() == 1);
 
     mConverter.startEvent();
-    mConverter.process(collision,
-                       xsections,
-                       pdfs
-#ifdef AODTOHEPMC_WITH_HEAVYION
-                       ,
-                       heavyions
-#endif
-    );
+    mConverter.process(collision,  // Prevent
+                       xsections,  // clang-format
+                       pdfs,       // from putting this
+                       heavyions); // on one big line
     mConverter.process(collision, tracks);
     mConverter.endEvent();
 
@@ -244,21 +236,33 @@ struct Task3 {
   void processAux(Header const& collision,
                   XSections const& xsections,
                   PdfInfos const& pdfs,
-                  HeavyIons const& heavyions)
+                  HeavyIons const& heavyions,
+                  Tracks const& tracks)
   {
-    LOG(info) << "=== Processing auxiliary header information";
+    LOG(info) << "=== Processing all information";
     assert(xsections.size() == 1);
     assert(heavyions.size() == 1);
     assert(pdfs.size() == 1);
-    mConverter.process(collision,
-                       xsections,
-                       pdfs,
-                       heavyions);
+    mConverter.startEvent();
+    mConverter.process(collision,  // Prevent
+                       xsections,  // clang-format
+                       pdfs,       // from putting this
+                       heavyions); // on one big line
+    mConverter.process(collision, tracks);
+    mConverter.endEvent();
+
+    mWrapper.process(mConverter.mEvent);
   }
   /** Process input */
   void process(Header const& collision,
                Tracks const& tracks)
   {
+    // If we're also asked to process the auxiliary information, then
+    // do nothing here, as that will mess up the processing.
+    if (doprocessAux) {
+      return;
+    }
+
     LOG(info) << "=== Processing tracks and header information";
     mConverter.process(collision, tracks);
     mWrapper.process(mConverter.mEvent);

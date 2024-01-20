@@ -35,7 +35,7 @@ The header files are
   - According Anton Alkin, jobs are never called when output is
     merged.  That is, the old
     
-	    AliAnalysisTask::Terminate
+        AliAnalysisTask::Terminate
         
     step is no longer available.  Instead, output is merged via a
     straight up `TFileMerger` call.   This is a regression.
@@ -57,9 +57,9 @@ The header files are
   - According Anton Alkin, jobs are never called when output is
     merged.  That is, the old
     
-	    AliAnalysisTask::Terminate
+        AliAnalysisTask::Terminate
         
-	step is no longer available.  Instead, output is merged via a
+    step is no longer available.  Instead, output is merged via a
     straight up `TFileMerger` call.   This is a regression.
 
 The task is
@@ -86,7 +86,7 @@ Other files in this project
 To make a simulation, with transport, we can do for example
 
     o2-sim -j 1 -n 10 -g pythia8pp -o pythia8pp \
-	    --configKeyValues "GeneratorPythia8.includePartonEvent=true"
+        --configKeyValues "GeneratorPythia8.includePartonEvent=true"
 
 This will produce `pythia8pp_Kine.root`.  Note that the O2 Pythia8 EG
 by default strips out non- final and decayed particles (including
@@ -102,7 +102,7 @@ which we can then feed into the simulation (this time without
 transport)
 
     o2-sim -j 1 -g hepmc -o genpythia --noGeant \
-	    --configKeyValues "GeneratorFileOrCmd.fileNames=genpythia.hepmc"
+        --configKeyValues "GeneratorFileOrCmd.fileNames=genpythia.hepmc"
 
 This will generate `genpythia_Kine.root`
 
@@ -112,13 +112,13 @@ When we have the kinematics file, we can process it futher, for
 example to create a HepMC file we can compare to the input
 
     o2-aod-mc-producer-workflow    \
-	    --mckine-fname genpythia | \
-	  o2-aod-mc-to-hepmc --hepmc-dump genpythia.hepmc
+        --mckine-fname genpythia | \
+      o2-aod-mc-to-hepmc --hepmc-dump genpythia.hepmc
 
 or
  
     o2-sim-kine-publisher --aggregate-timeframe 1   \
-		--kineFileName genpythia_Kine.root        | \
+        --kineFileName genpythia_Kine.root        | \
       o2-sim-mctracks-to-aod                      | \
       o2-aod-mc-to-hepmc --hepmc-dump genpythia.hepmc
 
@@ -128,18 +128,18 @@ on as we thing.
 
 ## Run a Rivet analysis
     o2-aod-mc-producer-workflow                       \
-	    --mckine-fname genpythia                    | \
-	  o2-analysis-mm-rivet                            \
-		  --rivet-dump genpythia_Kine.yoda            \
-		  --rivet-analysis ALICE_YYYY_I1234567		  \
-		  --rivet-pwd					              \
-		  --rivet-sources ALICE_YYYY_I1234567.cc      \
-		  --rivet-load-paths `pwd`/analyses           \
+        --mckine-fname genpythia                    | \
+      o2-analysis-mm-rivet                            \
+          --rivet-dump genpythia_Kine.yoda            \
+          --rivet-analysis ALICE_YYYY_I1234567        \
+          --rivet-pwd                                 \
+          --rivet-sources ALICE_YYYY_I1234567.C       \
+          --rivet-load-paths `pwd`/analyses           \
           --rivet-finalize                            \
           --hepmc-recenter
 
 where `./analysis` is assumed to hold the analysis code
-`ALICE_YYYY_I1234567.cc`, and associated files.
+`ALICE_YYYY_I1234567.C`, and associated files.
 The output is written in `genpythia_Kine.yoda` (option `--rivet-dump`)
 and as an `o2::rivet::RivetAOs` object in `AnalysisResults.root`
 
@@ -168,7 +168,7 @@ The list of dependecies are
   - FastJetContrib
     - FastJet
       - cgal
-	  - GMP
+      - GMP
 - O2
   - arrow
   - FairRoot

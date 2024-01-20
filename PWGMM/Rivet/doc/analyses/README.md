@@ -3,7 +3,7 @@
 In this directory are some example Rivet analyses to be used with
 `o2-analysis-mm-rivet`.
 
-- [`ALICE_YYYY_I1234567.cc`](ALICE_YYYY_I1234567.cc): Source code of
+- [`ALICE_YYYY_I1234567.C`](ALICE_YYYY_I1234567.C): Source code of
   the Rivet analysis
 - [`ALICE_YYYY_I1234567.info`](ALICE_YYYY_I1234567.info):
   Meta-information of the analysis.  This is used by Rivet for

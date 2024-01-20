@@ -452,7 +452,7 @@
 \begin{verbatim}
 o2-analysis-mm-rivet --aod-file AO2D.root --rivet-pwd \
   --rivet-analysis ALICE_YYYY_I1234567 \
-  --rivet-sources ALICE_YYYY_I1234567.cc
+  --rivet-sources ALICE_YYYY_I1234567.C
 \end{verbatim}
   \end{exampleblock}
 \end{frame}
@@ -467,7 +467,7 @@ o2-sim -n 100 -g pythia8pp -o pythia8pp
 o2-aod-mc-producer-workflow  --mckine-fname pythia8pp | \
   o2-analysis-mm-rivet --rivet-pwd \
     --rivet-analysis ALICE_YYYY_I1234567 \
-    --rivet-sources ALICE_YYYY_I1234567.cc
+    --rivet-sources ALICE_YYYY_I1234567.C
 \end{verbatim}
   \end{exampleblock}
 
@@ -478,7 +478,7 @@ o2-kine-publisher --nevents 100 --o2sim-pid $! --aggregate-timeframe 1 | \
   o2-sim-mctracks-to-aod | \
   o2-analysis-mm-rivet --rivet-pwd \
     --rivet-analysis ALICE_YYYY_I1234567 \
-    --rivet-sources ALICE_YYYY_I1234567.cc
+    --rivet-sources ALICE_YYYY_I1234567.C
 \end{verbatim}
   \end{exampleblock}
   \uncover<2->{
@@ -497,11 +497,11 @@ o2-kine-publisher --nevents 100 --o2sim-pid $! --aggregate-timeframe 1 | \
 \begin{verbatim}
 o2-analysis-mm-rivet --aod-file AO2D_1.root --rivet-pwd \
   --rivet-analysis ALICE_YYYY_I1234567 \
-  --rivet-sources ALICE_YYYY_I1234567.cc && \
+  --rivet-sources ALICE_YYYY_I1234567.C && \
   mv AnalysisResults.root AnalysisResults_1.root
 o2-analysis-mm-rivet --aod-file AO2D_2.root --rivet-pwd \
   --rivet-analysis ALICE_YYYY_I1234567 \
-  --rivet-sources ALICE_YYYY_I1234567.cc && \
+  --rivet-sources ALICE_YYYY_I1234567.C && \
   mv AnalysisResults.root AnalysisResults_2.root
 hadd finalized.root AnalysisResults_1.root AnalysisResults_2.root
 root -l -b -q WriteOutput\(\"finalized.root\"\)

@@ -155,7 +155,7 @@ if [[ $oper =~ rivet ]] ; then
                 --rivet-dump ${nam}_Kine.yoda      \
                 --rivet-analysis ${ana}            \
                 --rivet-pwd                        \
-                --rivet-sources ${src}/${ana}.cc   \
+                --rivet-sources ${src}/${ana}.C    \
                 --rivet-load-paths ${src}          \
                 --rivet-finalize                   \
                 --batch                            \

@@ -43,23 +43,23 @@ EOF
 
 while test $# -gt 0 ; do
     case $1 in
-	all)              oper="clean sim rivet" ;;
-	sim)              oper="${oper} sim"     ;;
-	hepmc)            oper="${oper} hepmc"   ;;
-	rivet)            oper="${oper} rivet"   ;;
-	plot)             oper="${oper} plot"    ;;
-	clean)            oper="${oper} clean"   ;;
-	-h|--help)        usage  ; exit 0        ;;
-	-n|--nev)         nev=$2 ; shift         ;;
-	-N|--name)        nam=$2 ; shift         ;;
-	-a|--analyses)    ana=$2 ; shift         ;;
-	-v|--verbose)     vrb=1                  ;;
-	-d|--debug)       dbg=1                  ;;
-	--) shift ; break ;;
-	*)
-	    echo "Unknown option or operation: $1" > /dev/stderr
-	    exit 1
-	    ;;
+        all)              oper="clean sim rivet" ;;
+        sim)              oper="${oper} sim"     ;;
+        hepmc)            oper="${oper} hepmc"   ;;
+        rivet)            oper="${oper} rivet"   ;;
+        plot)             oper="${oper} plot"    ;;
+        clean)            oper="${oper} clean"   ;;
+        -h|--help)        usage  ; exit 0        ;;
+        -n|--nev)         nev=$2 ; shift         ;;
+        -N|--name)        nam=$2 ; shift         ;;
+        -a|--analyses)    ana=$2 ; shift         ;;
+        -v|--verbose)     vrb=1                  ;;
+        -d|--debug)       dbg=1                  ;;
+        --) shift ; break ;;
+        *)
+            echo "Unknown option or operation: $1" > /dev/stderr
+            exit 1
+            ;;
     esac
     shift
 done
@@ -107,65 +107,65 @@ fi
 
 if [[ $oper =~ "sim" ]] then
     if test -f ${nam}_Kine.root ; then
-	echo "${nam}_Kine.root already exists, not redoing"
+        echo "${nam}_Kine.root already exists, not redoing"
     else
-	o2-sim                                                           \
-	    -j 1                                                         \
-	    -n ${nev}                                                    \
-	    -g pythia8pp                                                 \
-	    -o ${nam}                                                    \
-	    --noGeant                                                    \
-	    --configKeyValues "GeneratorPythia8.includePartonEvent=true" \
-	    ${simred}
-	ret=$?
-	if test $ret -ne 0 ; then
-	    echo "Simulation pass failed, exiting" > /dev/stderr
-	    exit 1
-	fi
+        o2-sim                                                           \
+            -j 1                                                         \
+            -n ${nev}                                                    \
+            -g pythia8pp                                                 \
+            -o ${nam}                                                    \
+            --noGeant                                                    \
+            --configKeyValues "GeneratorPythia8.includePartonEvent=true" \
+            ${simred}
+        ret=$?
+        if test $ret -ne 0 ; then
+            echo "Simulation pass failed, exiting" > /dev/stderr
+            exit 1
+        fi
     fi
 fi
 
 if [[ $oper =~ "hepmc" ]] then
     if test -f ${nam}_Kine.hepmc ; then
-	echo "${nam}_Kine.hepmc already exists, not redoing"
+        echo "${nam}_Kine.hepmc already exists, not redoing"
     else
-	o2-aod-mc-producer-workflow                \
-	    --mckine-fname ${nam} |                \
-	    o2-aod-mc-to-hepmc                     \
-		--hepmc-dump ${nam}_Kine.hepmc     \
-		--batch                            \
-		$@                                 \
-		${rvtred}
-	ret=$?
-	if test $ret -ne 0 ; then
-	    echo "Simulation pass failed, exiting" > /dev/stderr
-	    exit 1
-	fi
+        o2-aod-mc-producer-workflow                \
+            --mckine-fname ${nam} |                \
+            o2-aod-mc-to-hepmc                     \
+                --hepmc-dump ${nam}_Kine.hepmc     \
+                --batch                            \
+                $@                                 \
+                ${rvtred}
+        ret=$?
+        if test $ret -ne 0 ; then
+            echo "Simulation pass failed, exiting" > /dev/stderr
+            exit 1
+        fi
     fi
 fi
 
 if [[ $oper =~ rivet ]] ; then
     if test -f ${nam}_Kine.yoda ; then
-	echo "${nam}_Kine.yoda already exists, not redoing"
+        echo "${nam}_Kine.yoda already exists, not redoing"
     else
-	o2-aod-mc-producer-workflow                \
-	    --mckine-fname ${nam} |                \
-	    o2-analysis-mm-rivet                   \
-		--hepmc-recenter		   \
-		--rivet-dump ${nam}_Kine.yoda      \
-		--rivet-analysis ${ana}	           \
-		--rivet-pwd		           \
-		--rivet-sources ${src}/${ana}.cc   \
-		--rivet-load-paths ${src}          \
-		--rivet-finalize                   \
-		--batch                            \
-		$@                                 \
-		${rvtred}
-	    ret=$?
-	if test $ret -ne 0 ; then
-	    echo "Rivet pass failed, exiting" > /dev/stderr
-	    exit 1
-	fi
+        o2-aod-mc-producer-workflow                \
+            --mckine-fname ${nam} |                \
+            o2-analysis-mm-rivet                   \
+                --hepmc-recenter                   \
+                --rivet-dump ${nam}_Kine.yoda      \
+                --rivet-analysis ${ana}            \
+                --rivet-pwd                        \
+                --rivet-sources ${src}/${ana}.cc   \
+                --rivet-load-paths ${src}          \
+                --rivet-finalize                   \
+                --batch                            \
+                $@                                 \
+                ${rvtred}
+            ret=$?
+        if test $ret -ne 0 ; then
+            echo "Rivet pass failed, exiting" > /dev/stderr
+            exit 1
+        fi
     fi
 fi
 

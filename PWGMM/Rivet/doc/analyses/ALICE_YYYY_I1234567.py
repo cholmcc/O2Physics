@@ -46,9 +46,9 @@ def plotit(infile,raw,save):
 
         inpath = Path(infile.name)
         pngpath = inpath.with_suffix('.png')
-        
+
         ax.figure.savefig(str(pngpath))
-        
+
 
 if __name__ == '__main__':
     from argparse import ArgumentParser, FileType

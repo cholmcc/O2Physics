@@ -327,17 +327,17 @@ struct OutputManager<o2::rivet::Wrapper> {
                            uint32_t)
   {
     // LOG(info) << "\n"
-    // 	  << "**************************************\n"
-    // 	  << "Append output for o2::rivet::Wrapper\n"
-    // 	  << "**************************************";
+    //    << "**************************************\n"
+    //    << "Append output for o2::rivet::Wrapper\n"
+    //    << "**************************************";
     return true;
   }
   static bool prepare(ProcessingContext&, Target&)
   {
     // LOG(info) << "\n"
-    // 	  << "*****************************************\n"
-    // 	  << "Prepare for data for o2::rivet::Wrapper\n"
-    // 	  << "*****************************************";
+    //    << "*****************************************\n"
+    //    << "Prepare for data for o2::rivet::Wrapper\n"
+    //    << "*****************************************";
     return true;
   }
   static bool postRun(EndOfStreamContext&, Target& t)
@@ -352,9 +352,9 @@ struct OutputManager<o2::rivet::Wrapper> {
   static bool finalize(ProcessingContext&, Target& t)
   {
     // LOG(info) << "\n"
-    // 	  << "**************************************\n"
-    // 	  << "Finalize data for o2::rivet::Wrapper\n"
-    // 	  << "**************************************";
+    //    << "**************************************\n"
+    //    << "Finalize data for o2::rivet::Wrapper\n"
+    //    << "**************************************";
     return true;
   }
 };

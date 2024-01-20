@@ -16,10 +16,10 @@
 #include <TObjString.h>
 // #include <Mergers/MergeInterface.h>
 
-// Forward declaration 
+// Forward declaration
 namespace Rivet
 {
-  class AnalysisHandler;
+class AnalysisHandler;
 }
 
 namespace o2
@@ -41,7 +41,7 @@ namespace rivet
  *   @todo Probably need to derive from
  *   o2::mergers::MergeInterface to be mergable.
  */
-class RivetAOs : public TObject//, public o2::mergers::MergeInterface
+class RivetAOs : public TObject //, public o2::mergers::MergeInterface
 {
  public:
   /** Default constructor */
@@ -88,7 +88,7 @@ class RivetAOs : public TObject//, public o2::mergers::MergeInterface
    *  @param filename Name of file to write to
    */
   void SaveAs(const char* filename = "Rivet.yoda",
-	      Option_t* = "") const override; // *MENU*
+              Option_t* = "") const override; // *MENU*
   /** Print the content of this object
    *
    *  @param options Not used
@@ -129,6 +129,7 @@ class RivetAOs : public TObject//, public o2::mergers::MergeInterface
    * Get the data stored
    */
   const TString& Data() const { return mData.GetString(); }
+
  protected:
   /**
    * Merge data in yoda files @a fnms.  The result of merging (and @c

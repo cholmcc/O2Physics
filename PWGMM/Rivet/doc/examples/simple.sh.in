@@ -26,15 +26,15 @@ o2-sim                                                           \
 o2-aod-mc-producer-workflow                \
     --mckine-fname simple |                \
     o2-analysis-mm-rivet                   \
-	--hepmc-recenter		   \
-	--rivet-dump simple_Kine.yoda      \
-	--rivet-analysis ALICE_YYYY_I1234567	           \
-	--rivet-pwd		           \
-	--rivet-sources @CMAKE_CURRENT_SOURCE_DIR@/doc/analyses/ALICE_YYYY_I1234567.cc   \
-	--rivet-load-paths @CMAKE_CURRENT_SOURCE_DIR@/doc/analyses          \
-	--rivet-finalize                   \
-	--batch				   \
-	$@
+        --hepmc-recenter                   \
+        --rivet-dump simple_Kine.yoda      \
+        --rivet-analysis ALICE_YYYY_I1234567               \
+        --rivet-pwd                        \
+        --rivet-sources @CMAKE_CURRENT_SOURCE_DIR@/doc/analyses/ALICE_YYYY_I1234567.cc   \
+        --rivet-load-paths @CMAKE_CURRENT_SOURCE_DIR@/doc/analyses          \
+        --rivet-finalize                   \
+        --batch                            \
+        $@
 
 # Plot result of analysis - using a simple Python scriptx
 @CMAKE_CURRENT_SOURCE_DIR@/doc/analyses/ALICE_YYYY_I1234567.py simple_Kine.yoda

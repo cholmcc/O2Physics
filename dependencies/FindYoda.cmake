@@ -1,3 +1,14 @@
+# Copyright 2024-2099 CERN and copyright holders of ALICE O2.
+# See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
+# All rights not expressly granted are reserved.
+#
+# This software is distributed under the terms of the GNU General Public
+# License v3 (GPL Version 3), copied verbatim in the file "COPYING".
+#
+# In applying this license CERN does not waive the privileges and immunities
+# granted to it by virtue of its status as an Intergovernmental Organization
+# or submit itself to any jurisdiction.
+#
 # - Try to find Yoda
 #
 # This searches for the configuration script "yoda-config".  If this
@@ -9,8 +20,8 @@
 #  FastJet::Contrib
 #
 # _must_ previously have been found.
-# 
-# Defines the target "Yoda" as well as the variables 
+#
+# Defines the target "Yoda" as well as the variables
 #
 #  Yoda_FOUND
 #  YODA_VERSION
@@ -31,7 +42,7 @@ endif()
 
 # the following disables all default paths (either from cmake, from environment)
 FIND_PATH (YODA_BIN_DIR yoda-config
-  HINTS ${YODA_ROOT} ENV YODA_ROOT 
+  HINTS ${YODA_ROOT} ENV YODA_ROOT
 )
 
 if (YODA_BIN_DIR)
@@ -41,7 +52,7 @@ if (YODA_BIN_DIR)
   )
   # Remove white-space
   STRING (REGEX REPLACE "[ \t\r\n]+" "" YODA_VERSION "${YODA_VERSION}")
-  # Remove trailing patch 
+  # Remove trailing patch
   STRING (REGEX REPLACE "-.*" "" YODA_VERSION "${YODA_VERSION}")
   message(STATUS "Found Yoda version: ${YODA_VERSION}")
 
@@ -59,7 +70,7 @@ if (YODA_BIN_DIR)
     OUTPUT_VARIABLE YODA_LIB_DIR)
   string (REGEX REPLACE "\n$" "" YODA_LIB_DIR "${YODA_LIB_DIR}")
   # message(STATUS "YODA_LIB_DIR=${YODA_LIB_DIR}")
-  
+
   EXECUTE_PROCESS (COMMAND ${YODA_BIN_DIR}/yoda-config --cppflags
     OUTPUT_VARIABLE YODA_CPPFLAGS)
   string (REGEX REPLACE "\n$" "" YODA_CPPFLAGS "${YODA_CPPFLAGS}")
@@ -69,7 +80,7 @@ if (YODA_BIN_DIR)
     OUTPUT_VARIABLE YODA_CXXFLAGS)
   string (REGEX REPLACE "\n$" "" YODA_CXXFLAGS "${YODA_CXXFLAGS}")
   # message(STATUS "YODA_CXXFLAGS=${YODA_CXXFLAGS}")
-  
+
   EXECUTE_PROCESS (COMMAND ${YODA_BIN_DIR}/yoda-config --ldflags
     OUTPUT_VARIABLE YODA_LDFLAGS)
   string (REGEX REPLACE "\n$" "" YODA_LDFLAGS "${YODA_LDFLAGS}")
@@ -79,18 +90,18 @@ if (YODA_BIN_DIR)
     OUTPUT_VARIABLE YODA_LIBS)
   string (REGEX REPLACE "\n$" "" YODA_LIBS "${YODA_LIBS}")
   # message(STATUS "YODA_LIBS=${YODA_LIBS}")
-  
+
   #set(YODA_LIBRARIES ${YODA_LIBRARY})
   #  mark_as_advanced(Yoda_FOUND)
 
   string (REGEX REPLACE "\n$" "" YODA_CXXFLAGS "${YODA_CXXFLAGS}")
-  string (REPLACE " " ";" YODA_CXXFLAGS "${YODA_CXXFLAGS}")    
+  string (REPLACE " " ";" YODA_CXXFLAGS "${YODA_CXXFLAGS}")
 
   find_library(YODA_LIBRARY
     NAMES YODA
     HINTS ${YODA_LIB_DIR} ENV ${YODA_ROOT}
   )
-  
+
   add_library(Yoda SHARED IMPORTED)
   add_library(Yoda::Yoda ALIAS Yoda)
   set_target_properties(Yoda PROPERTIES IMPORTED_LOCATION
@@ -117,4 +128,4 @@ endif(Yoda_FOUND)
 # EOF
 #
 
-  
+

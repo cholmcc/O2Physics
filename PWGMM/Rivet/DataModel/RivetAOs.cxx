@@ -69,32 +69,32 @@ void RivetAOs::merge(o2::mergers::MergeInterface* const other)
   Info("merge", "O2 merge interface member function called");
   RivetAOs* o = dynamic_cast<RivetAOs*>(other);
   if (not o) {
-	throw std::runtime_error("Cannot merge with object not "
-				 "of class RivetAOs");
+        throw std::runtime_error("Cannot merge with object not "
+                                 "of class RivetAOs");
   }
   std::vector<std::string> tmps;
   if (not mData.GetString().IsNull()) {
-	tmps.push_back(WriteTmp());
+        tmps.push_back(WriteTmp());
   }
   if (not o->Data().IsNull()) {
-	tmps.push_back(o->WriteTmp());
+        tmps.push_back(o->WriteTmp());
   }
 
   for (auto f : tmps) {
-	Info("Merge", "  %s", f.c_str());
-	if (gSystem->AccessPathName(f.c_str())) {
-	  Warning("Merge", "Does not exist!");
-	}
+        Info("Merge", "  %s", f.c_str());
+        if (gSystem->AccessPathName(f.c_str())) {
+          Warning("Merge", "Does not exist!");
+        }
   }
-  
+
   for (auto o : mLoadPaths) {
-	Rivet::addAnalysisLibPath(o->GetName());
-	Rivet::addAnalysisDataPath(o->GetName());
+        Rivet::addAnalysisLibPath(o->GetName());
+        Rivet::addAnalysisDataPath(o->GetName());
   }
 
   Rivet::AnalysisHandler ah("");
   if (MergeYoda(ah, tmps, mEquivalent, true) <= 0)
-	throw std::runtime_error("Failed to merge YODA outputs");
+        throw std::runtime_error("Failed to merge YODA outputs");
 }
 #endif
 //----------------------------------------------------------------

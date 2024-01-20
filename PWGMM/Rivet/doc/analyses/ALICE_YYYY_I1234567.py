@@ -1,16 +1,15 @@
 #!/usr/bin/env -S python -i --
 # pyright: basic
 def plotit(infile,raw=False,reference=False,save=False):
+    from sys import stderr
     try:
         # pylint: disable=all
         from matplotlib.pyplot import gca # pyright: ignore
-        from yoda import readYODA # pyright: ignore 
+        from yoda import readYODA # pyright: ignore
         from numpy import asarray # pyright: ignore
     except ImportError as e:
         print(e)
         return
-    
-    from sys import stderr
 
     aos = readYODA(infile)
 
@@ -21,6 +20,7 @@ def plotit(infile,raw=False,reference=False,save=False):
     nev   = None
     xsec  = None
 
+    prefix = '' # pyright cannot figure this out!
     for prefix in ["", "/RAW", "/REF"]:
         histo = aos.get(prefix+'/ALICE_YYYY_I1234567/d01-x01-y01',None)
         nev   = aos.get(prefix+'/_EVTCOUNT',None)

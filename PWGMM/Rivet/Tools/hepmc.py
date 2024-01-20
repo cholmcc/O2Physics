@@ -26,7 +26,7 @@ This supports both
 
 """
 
-# Linter insists this must be on top 
+# Linter insists this must be on top
 from contextlib import AbstractContextManager
 
 
@@ -762,7 +762,7 @@ class Reader:
         if not args[0].startswith('v') or args[0] == 'v0':
             vers = 0
             off  = args[0] == 'v0'
-            
+
             self._event['heavyion'] = {'ncoll_hard': int(args[off+0]),  # pyright: ignore
                                        'npart_proj': int(args[off+1]),
                                        'npart_targ': int(args[off+2]),
@@ -870,7 +870,7 @@ class Reader:
             return;
 
         self._event['xsec']['accepted'] = int(args[0]) # pyright: ignore
-        
+
         if len(args) <= 1: # Linter doesn't like single-line if's
             return;
 
@@ -882,10 +882,9 @@ class Reader:
         self._event['xsec']['value'].append([float(v) for v in args[2::2]]) # pyright: ignore
         self._event['xsec']['uncer'].append([float(u) for u in args[2+1::2]]) # pyright: ignore
 
-        assert len(self._event['xsec']['value']) == \  # pyright: ignore
-            len(self._event['xsec']['uncer']), \  # pyright: ignore
-            f'In line {lineno} inconsistent number of X-section '\
-            'values and uncertainties'
+        if len(self._event['xsec']['value']) != len(self._event['xsec']['uncer']):  # pyright: ignore
+            raise RuntimeError(f'In line {lineno} inconsistent number of '
+                               'X-section values and uncertainties')
 
     # ----------------------------------------------------------------
     def _parse_weights(self,lineno,*args):
@@ -2266,9 +2265,8 @@ class Graph:
             from numpy import asarray, sum  # pyright: ignore
         except Exception as e:
             raise e
-        
+
         from math import sqrt
-            
 
         attrs = {'shape': 'point' if vertex is None else 'circle' }
         label = f''

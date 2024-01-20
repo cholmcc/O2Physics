@@ -187,9 +187,7 @@
     \begin{itemize}
     \item Including cases where the AOs where merged from multiple
       jobs --- e.g., Grid execution
-    \item To be done ``by-hand'' by user. \newline
-      {\footnotesize \alert{No \texttt{Terminate} method available in
-          \Otwo{}} --- regression. }
+    \item To be done ``by-hand'' by user.
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -489,7 +487,7 @@ o2-kine-publisher --nevents 100 --o2sim-pid $! --aggregate-timeframe 1 | \
   \end{exampleblock}
   \uncover<2->{
     {\footnotesize{} (BTW, it should be
-      \texttt{--noDis{\itshape{}k\/}Output}), see 
+      \texttt{--noDis{\itshape{}k\/}Output}), see
       \href{https://www.grammarly.com/blog/disc-disk/}{here} --- So much
       AliNglish.}}
 \end{frame}
@@ -579,7 +577,7 @@ ipython3 -i ALICE_YYYY_I1234567.py finalized.yoda
   \frametitle{HepMC auxiliary to \texttt{MCEventHeader}}
 
   {Commits of merge request \alert{\href{https://github.com/AliceO2Group/AliceO2/pull/12032/commits}{\# 12032}}}
-  
+
   \begin{itemize}[<+->]
   \item \texttt{GeneratorPythia8} fill in available HepMC aux\newline
     {\footnotesize Uses different info than \Pythia{} authors use for

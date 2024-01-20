@@ -2,7 +2,6 @@
 # pyright: basic
 # mypy: disable_error_code=method-assign
 def plotit(infile, raw=False, reference=False, save=False):
-
     try:
         # pylint: disable=all
         from matplotlib.pyplot import gca  # pyright: ignore

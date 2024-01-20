@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     def handle_exit(status=0,message=''):
         raise RuntimeError(message)
-    ap.exit = handle_exit  # pyright: ignore
+    ap.exit = handle_exit  # pyright: ignore  mypy: allow-method-assign
 
     try:
         args = ap.parse_args()

@@ -273,8 +273,7 @@ class Reader:
                     self._parse_info(lineno, *tokens[1:])
                     break
                 else:
-                    raise RuntimeError(f"Unexpected line at line " + # X
-                                       f'{lineno}: got "{tokens}"')
+                    raise RuntimeError(f"Unexpected line at line " + f'{lineno}: got "{tokens}"')  # X
 
             if self._event is None:
                 return lineno, None
@@ -322,19 +321,21 @@ class Reader:
             self._parse_info3(lineno, *args)
 
     # ----------------------------------------------------------------
-    def _parse_info2(self,          # Keep
-                     lineno,        # your
-                     number,        # filthy
-                     mpi,           # hands
-                     scale,         # off
-                     alpha_qcd,     # my
-                     alpha_qed,     # formatting
-                     signal_id,     # you
-                     signal_vertex, # make
-                     nvertices,     # it
-                     beam1,         # much
-                     beam2,         # worse
-                     *args):
+    def _parse_info2(
+        self,  # Keep
+        lineno,  # your
+        number,  # filthy
+        mpi,  # hands
+        scale,  # off
+        alpha_qcd,  # my
+        alpha_qed,  # formatting
+        signal_id,  # you
+        signal_vertex,  # make
+        nvertices,  # it
+        beam1,  # much
+        beam2,  # worse
+        *args,
+    ):
         """Read header line with the format
 
             event_number mpi scale alpha_qcd alpha_qed signal_id signal_vertex
@@ -383,8 +384,7 @@ class Reader:
         }
         nrandom = int(args[0])
         if nrandom > 0:
-            self._event["attributes"]["random_states"] = [# X
-                int(s) for s in args[1 : nrandom + 1]]
+            self._event["attributes"]["random_states"] = [int(s) for s in args[1 : nrandom + 1]]  # X
 
         nweights = int(args[nrandom + 1])
         if nweights > 0:
@@ -446,14 +446,16 @@ class Reader:
         self._event["units"] = {"energy": energy, "length": length}  # pyright: ignore
 
     # ----------------------------------------------------------------
-    def _make_vertex(self,            # Do
-                     vid=0,           # not
-                     status=0,        # mess
-                     position=None,   # with
-                     incoming=None,   # my
-                     outgoing=None,   # code
-                     attributes=None, # formatting
-                     level=0):
+    def _make_vertex(
+        self,  # Do
+        vid=0,  # not
+        status=0,  # mess
+        position=None,  # with
+        incoming=None,  # my
+        outgoing=None,  # code
+        attributes=None,  # formatting
+        level=0,
+    ):
         """Create a dictionary of a vertex
 
         Parameters
@@ -501,17 +503,19 @@ class Reader:
             self._parse_vertex3(lineno, *args)
 
     # ----------------------------------------------------------------
-    def _parse_vertex2(self,      # Do
-                       lineno,    # not
-                       sid,       # mess
-                       status,    # with
-                       x,         # my
-                       y,         # formatting
-                       z,         # you
-                       t,         # make
-                       n_out,     # it
-                       n_weights, # worse
-                       *args):
+    def _parse_vertex2(
+        self,  # Do
+        lineno,  # not
+        sid,  # mess
+        status,  # with
+        x,  # my
+        y,  # formatting
+        z,  # you
+        t,  # make
+        n_out,  # it
+        n_weights,  # worse
+        *args,
+    ):
         """Read in vertex with format
 
             id status x y z t n_out n_weights [weights]*n_weights
@@ -581,9 +585,7 @@ class Reader:
                 # v['incoming'].extend([int(i)-1 for i in
                 #                       args[0].strip('[]').split(',')
                 #                       if len(i) > 0])
-                v["incoming"] = [                                  # Hands
-                    int(i) for i in args[0].strip("[]").split(",") # off
-                    if len(i) > 0]
+                v["incoming"] = [int(i) for i in args[0].strip("[]").split(",") if len(i) > 0]  # Hands  # off
 
             if poff > 0:
                 v["position"] = [float(f) for f in args[poff : poff + 4]]
@@ -593,15 +595,17 @@ class Reader:
         # pprint(self._event['vertices'],depth=3)
 
     # ----------------------------------------------------------------
-    def _make_particle(self,          # Get your
-                       pid=0,         # hands off
-                       origin=None,   # my code
-                       end=None,      # formatting
-                       status=0,      # you
-                       pdg=0,         # make
-                       momentum=None, # it
-                       mass=0,        # worse
-                       attributes={}):
+    def _make_particle(
+        self,  # Get your
+        pid=0,  # hands off
+        origin=None,  # my code
+        end=None,  # formatting
+        status=0,  # you
+        pdg=0,  # make
+        momentum=None,  # it
+        mass=0,  # worse
+        attributes={},
+    ):
         """Create a particle (a dict) from values
 
         Parameters
@@ -654,21 +658,23 @@ class Reader:
             self._parse_particle3(lineno, *args)
 
     # ----------------------------------------------------------------
-    def _parse_particle2(self,   # Get
-                         lineno, # your
-                         id,     # hands
-                         pid,    # off
-                         px,     # my
-                         py,     # code
-                         pz,     # formatting
-                         e,      # you
-                         m,      # only
-                         status, # make
-                         theta,  # it
-                         phi,    # so
-                         aux,    # much
-                         nflow,  # worse
-                         *args):
+    def _parse_particle2(
+        self,  # Get
+        lineno,  # your
+        id,  # hands
+        pid,  # off
+        px,  # my
+        py,  # code
+        pz,  # formatting
+        e,  # you
+        m,  # only
+        status,  # make
+        theta,  # it
+        phi,  # so
+        aux,  # much
+        nflow,  # worse
+        *args,
+    ):
         """Read a particle
 
             id pid px py pz e status theta phi mother [n_flow [flows]]
@@ -732,18 +738,20 @@ class Reader:
         )
 
     # ----------------------------------------------------------------
-    def _parse_particle3(self,   # Do
-                         lineno, # not
-                         sid,    # mess
-                         aux,    # with
-                         pid,    # my
-                         px,     # formatting
-                         py,     # you
-                         pz,     # make
-                         e,      # it
-                         m,      # much
-                         status, # worse
-                         *args):
+    def _parse_particle3(
+        self,  # Do
+        lineno,  # not
+        sid,  # mess
+        aux,  # with
+        pid,  # my
+        px,  # formatting
+        py,  # you
+        pz,  # make
+        e,  # it
+        m,  # much
+        status,  # worse
+        *args,
+    ):
         """Read a particle
 
             id aux pid px py pz e m status
@@ -865,18 +873,20 @@ class Reader:
         hi["eccentricities"] = [float(f) for f in args[off + 16 : off + 16 + n]]  # pyright: ignore
 
     # ----------------------------------------------------------------
-    def _parse_pdf(self,   # Get
-                   lineno, # Your
-                   pid1,   # Filthy
-                   pid2,   # Hands
-                   x1,     # Off
-                   x2,     # My
-                   scale,  # Code
-                   xf1,    # Formatting
-                   xf2,    # You
-                   id1,    # Make it
-                   id2,    # Worse
-                   *args):
+    def _parse_pdf(
+        self,  # Get
+        lineno,  # Your
+        pid1,  # Filthy
+        pid2,  # Hands
+        x1,  # Off
+        x2,  # My
+        scale,  # Code
+        xf1,  # Formatting
+        xf2,  # You
+        id1,  # Make it
+        id2,  # Worse
+        *args,
+    ):
         """Read parton distribution function
 
         Parameters
@@ -931,8 +941,7 @@ class Reader:
         args : tuple of str
              Additional arguments
         """
-        self._event["xsec"] = {"value": [float(xsec)],     # pyright: ignore
-                               "uncer": [float(xsecerr)]}  # pyright: ignore
+        self._event["xsec"] = {"value": [float(xsec)], "uncer": [float(xsecerr)]}  # pyright: ignore  # pyright: ignore
 
         if args and len(args) <= 0:  # Linter doesn't like single-line if's
             return
@@ -947,14 +956,14 @@ class Reader:
         if len(args) <= 2:  # Linter doesn't like single-line if's
             return
 
-        self._event["xsec"]["value"].append(       # pyright: ignore
-            [float(v) for v in args[2::2]])        # pyright: ignore
-        self._event["xsec"]["uncer"].append(       # pyright: ignore
-            [float(u) for u in args[2 + 1 :: 2]])  # pyright: ignore
+        self._event["xsec"]["value"].append([float(v) for v in args[2::2]])  # pyright: ignore  # pyright: ignore
+        self._event["xsec"]["uncer"].append([float(u) for u in args[2 + 1 :: 2]])  # pyright: ignore  # pyright: ignore
 
         if len(self._event["xsec"]["value"]) != len(self._event["xsec"]["uncer"]):  # pyright: ignore
-            raise RuntimeError(f"In line {lineno} inconsistent number of " # X
-                               "X-section values and uncertainties")
+            raise RuntimeError(
+                f"In line {lineno} inconsistent number of "  # X
+                "X-section values and uncertainties"
+            )
 
     # ----------------------------------------------------------------
     def _parse_weights(self, lineno, *args):
@@ -1143,8 +1152,7 @@ class Reader:
                     + "] "
                     + " not in event "
                     + "["
-                    + ",".join([f"{oo}" for oo in # Leave me
-                                self._event["particles"].keys()])
+                    + ",".join([f"{oo}" for oo in self._event["particles"].keys()])  # Leave me
                     + "]"
                 )
 
@@ -1190,17 +1198,14 @@ class Reader:
         for vid, vertex in enumerate(self._event["vertices"]):
             for vid, vertex in self._event["vertices"].items():
                 self.calc_depth(vid, vertex)
-                self._event["max_depth"] = max(self._event["max_depth"], # X
-                                               vertex["level"])
+                self._event["max_depth"] = max(self._event["max_depth"], vertex["level"])  # X
 
         if not check:
             return lineno, self._event
 
         for vid, v in make_iter(self._event["vertices"]):
-            self._check(len(v["outgoing"]) > 0, # Leave me
-                        f"No outgoing particles from vertex {vid}: {v}")
-            self._check(len(v["incoming"]) > 0, # Leave me
-                        f"No incoming particles to vertex {vid}: {v}")
+            self._check(len(v["outgoing"]) > 0, f"No outgoing particles from vertex {vid}: {v}")  # Leave me
+            self._check(len(v["incoming"]) > 0, f"No incoming particles to vertex {vid}: {v}")  # Leave me
 
         # for pid,p in enumerate(self._event['particles']):
         for pid, p in make_iter(self._event["particles"]):
@@ -1210,13 +1215,11 @@ class Reader:
 
             self._check(
                 st == 1 or st > 200 or end is not None,
-                f'Particle {p["id"]} ({p["pid"]},{st}) ' + # Leave me
-                "has no end vertex nor is it final state",
+                f'Particle {p["id"]} ({p["pid"]},{st}) ' + "has no end vertex nor is it final state",  # Leave me
             )
             self._check(
                 st == 4 or orig is not None,
-                f'Particle {p["id"]} ({p["pid"]},{st}) ' + # Leave me
-                "has no production vertex nor is it beam",
+                f'Particle {p["id"]} ({p["pid"]},{st}) ' + "has no production vertex nor is it beam",  # Leave me
             )
 
         return lineno, self._event
@@ -1304,9 +1307,7 @@ class HepMCInput(AbstractContextManager):
             event : dict
                 Read event or None
             """
-            self._lineno, ev = self._reader.read(self._stream, # Leave me
-                                                 self._lineno, # alone
-                                                 check)
+            self._lineno, ev = self._reader.read(self._stream, self._lineno, check)  # Leave me  # alone
 
             return ev
 
@@ -2236,8 +2237,10 @@ _greek_letters += [let.lower() for let in _greek_letters]
 def _greek_unicode(let):
     from unicodedata import lookup
 
-    return lookup(f'GREEK {"SMALL" if let == let.lower() else "CAPITAL"} ' # X
-                  f"LETTER {let.upper()}")
+    return lookup(
+        f'GREEK {"SMALL" if let == let.lower() else "CAPITAL"} '  # X
+        f"LETTER {let.upper()}"
+    )
 
 
 # --------------------------------------------------------------------
@@ -2311,17 +2314,25 @@ class Graph:
             attrs["color"] = "darkmagenta"
             apid = abs(particle["pid"])
             if (
-                apid in [81, 82]                        # Leave
-                or apid < 25                            # my
-                or (apid // 1000 in [1, 2, 3, 4, 5] and # formatting
-                    (apid % 1000) // 10 in [1, 2, 3, 4] # alone
-                    and (apid % 100) in [1, 3])):
+                apid in [81, 82]  # Leave
+                or apid < 25  # my
+                or (
+                    apid // 1000 in [1, 2, 3, 4, 5]
+                    and (apid % 1000) // 10 in [1, 2, 3, 4]  # formatting  # alone
+                    and (apid % 100) in [1, 3]
+                )
+            ):
                 attrs["color"] = "darkred"
         if particle["status"] > 200:
             attrs["style"] = "dashed"
 
-        dot.edge(start, end, f'< {self.pid2ltx(particle["pid"])}' # X
-                 f'({particle["id"]},{particle["status"]})>', **attrs)
+        dot.edge(
+            start,
+            end,
+            f'< {self.pid2ltx(particle["pid"])}'  # X
+            f'({particle["id"]},{particle["status"]})>',
+            **attrs,
+        )
 
     def node(self, dot, vid, event=None, vertex=None):
         """Create a new in the tree
@@ -2356,15 +2367,19 @@ class Graph:
             out_mom = asarray([0.0, 0.0, 0.0, 0.0])
             for pid in vertex["incoming"]:
                 if pid not in event["particles"]:
-                    print(f"Missing incoming particle {pid} from " # X
-                          f"vertex {label}")
+                    print(
+                        f"Missing incoming particle {pid} from "  # X
+                        f"vertex {label}"
+                    )
                     continue
                 in_mom += asarray(event["particles"][pid]["momentum"])
 
             for pid in vertex["outgoing"]:
                 if pid not in event["particles"]:
-                    print(f"Missing outgoing particle {pid} from " # X
-                          f"vertex {label}")
+                    print(
+                        f"Missing outgoing particle {pid} from "  # X
+                        f"vertex {label}"
+                    )
                     continue
                 out_mom += asarray(event["particles"][pid]["momentum"])
 
@@ -2411,8 +2426,9 @@ class Graph:
         except Exception as e:
             raise e
 
-        dot = Digraph(name=f"{self._prefix}_event{no:06d}", # Leave me
-                      comment=f'{self._prefix} Event # {event["number"]}')
+        dot = Digraph(
+            name=f"{self._prefix}_event{no:06d}", comment=f'{self._prefix} Event # {event["number"]}'  # Leave me
+        )
         dot.attr("node", shape="rectangle")
 
         nvertex = 0
@@ -2444,10 +2460,12 @@ class Graph:
 
                 self.node(dot, self.nodeid(pid, "s"))
                 ndummy += 1
-                self.edge(dot,                               # Leave my
-                          self.nodeid(pid, "s"),             # formatting
-                          self.nodeid(particle["end"], "v"), # alone
-                          particle)
+                self.edge(
+                    dot,  # Leave my
+                    self.nodeid(pid, "s"),  # formatting
+                    self.nodeid(particle["end"], "v"),  # alone
+                    particle,
+                )
 
         # for vid,vertex in enumerate(event['vertices']):
         for vid, vertex in make_iter(event["vertices"]):
@@ -2456,14 +2474,14 @@ class Graph:
 
             for pid in vertex["outgoing"]:
                 if pid not in event["particles"]:
-                    print(f"Missing outgoing particle {pid} from " # X
-                          f"vertex {vid}")
+                    print(
+                        f"Missing outgoing particle {pid} from "  # X
+                        f"vertex {vid}"
+                    )
                     continue
                 particle = event["particles"][pid]
                 eid = particle["end"]
-                end = (event["vertices"][eid] #
-                       if eid is not None and eid != 0 else #
-                       None)
+                end = event["vertices"][eid] if eid is not None and eid != 0 else None  #  #
 
                 if eid is None or self.veto(end):  # Final state?
                     # If particle has no end vertex, create a dummy vertex
@@ -2490,16 +2508,18 @@ class Graph:
 
 
 # ====================================================================
-def show(inp,          # Do
-         max=10,       # not
-         skip=0,       # mess
-         stagger=3,    # with
-         check=True,   # my
-         prefix="",    # formatting
-         view=True,    # you
-         max_depth=-1, # make it
-         max_de=True,  # worse
-         dump=False):
+def show(
+    inp,  # Do
+    max=10,  # not
+    skip=0,  # mess
+    stagger=3,  # with
+    check=True,  # my
+    prefix="",  # formatting
+    view=True,  # you
+    max_depth=-1,  # make it
+    max_de=True,  # worse
+    dump=False,
+):
     if prefix == "":
         from pathlib import Path
 
@@ -2528,69 +2548,81 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
 
     ap = ArgumentParser("Show HepMC3 event record")
-    ap.add_argument("input",    # Leave my
-                    type=str,   # formatting
-                    nargs="+",  # alone
-                    help="Input HepMC file(s)")
-    ap.add_argument("-n",       # Leave
-                    "--maxev",  # my
-                    type=int,   # formatting
-                    default=-1, # alone
-                    help="Maximum number of events to show for each file")
-    ap.add_argument("-s",      # Leave
-                    "--skip",  # my
-                    type=int,  # formatting
-                    default=0, # alone
-                    help="Skip a number of events in the beginning of a file")
-    ap.add_argument("-S",        # Leave
-                    "--stagger", # my
-                    type=int,    # formatting
-                    default=3,   # alone
-                    help="Declutter the graphs by this factor")
-    ap.add_argument("--check",           # Leave
-                    dest="check",        # my
-                    action="store_true", # formatting
-                    default=True,        # alone
-                    help="Check consistency of events")
-    ap.add_argument("--no-check",         # Leave my
-                    dest="check",         # formatting
-                    action="store_false", # alone
-                    help="Do not check consistency of events")
-    ap.add_argument("-b",                 # Leave
-                    "--batch",            # my
-                    dest="view",          # formatting
-                    action="store_false", # alone
-                    help="Run in batch mode, no graphs shown")
-    ap.add_argument("-m",          # Leave
-                    "--max-depth", # my
-                    type=int,      # formatting
-                    default=-1,    # alone
-                    help="Maximum depth of the event trees")
-    ap.add_argument("-d",       # Leave
-                    "--max-de", # my
-                    type=float, # formatting
-                    default=5,  # alone
-                    help=("Mark vertex which do not preserve energy " #
-                          "above given percentage"))
-    ap.add_argument("-D",                # Leave my
-                    "--dump",            # formatting
-                    action="store_true", # alone
-                    help="Write graphs to file")
+    ap.add_argument("input", type=str, nargs="+", help="Input HepMC file(s)")  # Leave my  # formatting  # alone
+    ap.add_argument(
+        "-n",  # Leave
+        "--maxev",  # my
+        type=int,  # formatting
+        default=-1,  # alone
+        help="Maximum number of events to show for each file",
+    )
+    ap.add_argument(
+        "-s",  # Leave
+        "--skip",  # my
+        type=int,  # formatting
+        default=0,  # alone
+        help="Skip a number of events in the beginning of a file",
+    )
+    ap.add_argument(
+        "-S",  # Leave
+        "--stagger",  # my
+        type=int,  # formatting
+        default=3,  # alone
+        help="Declutter the graphs by this factor",
+    )
+    ap.add_argument(
+        "--check",  # Leave
+        dest="check",  # my
+        action="store_true",  # formatting
+        default=True,  # alone
+        help="Check consistency of events",
+    )
+    ap.add_argument(
+        "--no-check",  # Leave my
+        dest="check",  # formatting
+        action="store_false",  # alone
+        help="Do not check consistency of events",
+    )
+    ap.add_argument(
+        "-b",  # Leave
+        "--batch",  # my
+        dest="view",  # formatting
+        action="store_false",  # alone
+        help="Run in batch mode, no graphs shown",
+    )
+    ap.add_argument(
+        "-m",  # Leave
+        "--max-depth",  # my
+        type=int,  # formatting
+        default=-1,  # alone
+        help="Maximum depth of the event trees",
+    )
+    ap.add_argument(
+        "-d",  # Leave
+        "--max-de",  # my
+        type=float,  # formatting
+        default=5,  # alone
+        help=(
+            "Mark vertex which do not preserve energy "  #
+            "above given percentage"
+        ),
+    )
+    ap.add_argument("-D", "--dump", action="store_true", help="Write graphs to file")  # Leave my  # formatting  # alone
 
     args = ap.parse_args()
 
     # try:
     for inp in args.input:
         show(
-            inp,                      # Get
-            max=args.maxev,           # your
-            skip=args.skip,           # dirty
-            stagger=args.stagger,     # fingers
-            check=args.check,         # off
-            view=args.view,           # my
-            max_depth=args.max_depth, # formatting
-            max_de=args.max_de,       # you make
-            dump=args.dump,           # it worse
+            inp,  # Get
+            max=args.maxev,  # your
+            skip=args.skip,  # dirty
+            stagger=args.stagger,  # fingers
+            check=args.check,  # off
+            view=args.view,  # my
+            max_depth=args.max_depth,  # formatting
+            max_de=args.max_de,  # you make
+            dump=args.dump,  # it worse
         )
 
     # except Exception as e:

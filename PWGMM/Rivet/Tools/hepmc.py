@@ -273,10 +273,7 @@ class Reader:
                     self._parse_info(lineno, *tokens[1:])
                     break
                 else:
-                    raise RuntimeError( # X
-                        f"Unexpected line at line " + # X
-                        f'{lineno}: got "{tokens}"'  # X
-                    )
+                    raise RuntimeError(f"Unexpected line at line " + f'{lineno}: got "{tokens}"')  # X  # X  # X
 
             if self._event is None:
                 return lineno, None
@@ -387,9 +384,7 @@ class Reader:
         }
         nrandom = int(args[0])
         if nrandom > 0:
-            self._event["attributes"]["random_states"] = [ # X
-                int(s) for s in args[1 : nrandom + 1]  # X
-            ]
+            self._event["attributes"]["random_states"] = [int(s) for s in args[1 : nrandom + 1]]  # X  # X
 
         nweights = int(args[nrandom + 1])
         if nweights > 0:
@@ -448,10 +443,7 @@ class Reader:
         """
         self._assert_no_garbage(lineno, "units", args)
 
-        self._event["units"] = { # pyright: ignore
-            "energy": energy, # X
-            "length": length # X
-        }
+        self._event["units"] = {"energy": energy, "length": length}  # pyright: ignore  # X  # X
 
     # ----------------------------------------------------------------
     def _make_vertex(
@@ -593,9 +585,8 @@ class Reader:
                 # v['incoming'].extend([int(i)-1 for i in
                 #                       args[0].strip('[]').split(',')
                 #                       if len(i) > 0])
-                v["incoming"] = [# Hands
-                    int(i) for i in args[0].strip("[]").split(",") # off
-                    if len(i) > 0  # Mega-Linter
+                v["incoming"] = [  # Hands
+                    int(i) for i in args[0].strip("[]").split(",") if len(i) > 0  # off  # Mega-Linter
                 ]
             if poff > 0:
                 v["position"] = [float(f) for f in args[poff : poff + 4]]
@@ -876,15 +867,11 @@ class Reader:
             return
 
         n = int(args[off + 15])
-        hi["planes"] = [ # pyright: ignore
-            float(f) for f in args[off + 16 : off + 16 + n] # Hands-off
-        ]
+        hi["planes"] = [float(f) for f in args[off + 16 : off + 16 + n]]  # pyright: ignore  # Hands-off
 
         off += n + 1
         n = int(args[off + 15])
-        hi["eccentricities"] = [ # pyright: ignore
-            float(f) for f in args[off + 16 : off + 16 + n] # Hands-off
-        ]
+        hi["eccentricities"] = [float(f) for f in args[off + 16 : off + 16 + n]]  # pyright: ignore  # Hands-off
 
     # ----------------------------------------------------------------
     def _parse_pdf(
@@ -955,9 +942,9 @@ class Reader:
         args : tuple of str
              Additional arguments
         """
-        self._event["xsec"] = { # pyright: ignore
-            "value": [float(xsec)], # pyright: ignore
-            "uncer": [float(xsecerr)] # pyright: ignore
+        self._event["xsec"] = {  # pyright: ignore
+            "value": [float(xsec)],  # pyright: ignore
+            "uncer": [float(xsecerr)],  # pyright: ignore
         }
 
         if args and len(args) <= 0:  # Linter doesn't like single-line if's
@@ -973,17 +960,13 @@ class Reader:
         if len(args) <= 2:  # Linter doesn't like single-line if's
             return
 
-        self._event["xsec"]["value"].append( # pyright: ignore
-            [float(v) for v in args[2::2]]    # pyright: ignore
-        )
-        self._event["xsec"]["uncer"].append( # pyright: ignore
-            [float(u) for u in args[2 + 1 :: 2]]  # pyright: ignore
-        )
+        self._event["xsec"]["value"].append([float(v) for v in args[2::2]])  # pyright: ignore  # pyright: ignore
+        self._event["xsec"]["uncer"].append([float(u) for u in args[2 + 1 :: 2]])  # pyright: ignore  # pyright: ignore
 
         if len(self._event["xsec"]["value"]) != len(self._event["xsec"]["uncer"]):  # pyright: ignore
             raise RuntimeError(
                 f"In line {lineno} inconsistent number of "  # X
-                "X-section values and uncertainties" # X
+                "X-section values and uncertainties"  # X
             )
 
     # ----------------------------------------------------------------
@@ -1171,9 +1154,7 @@ class Reader:
                     + "] "
                     + " not in event "
                     + "["
-                    + ",".join(# X
-                        [f"{oo}" for oo in self._event["particles"].keys()] # X
-                    )  # Leave me
+                    + ",".join([f"{oo}" for oo in self._event["particles"].keys()])  # X  # X  # Leave me
                     + "]"
                 )
 
@@ -1219,23 +1200,14 @@ class Reader:
         for vid, vertex in enumerate(self._event["vertices"]):
             for vid, vertex in self._event["vertices"].items():
                 self.calc_depth(vid, vertex)
-                self._event["max_depth"] = max(# X
-                    self._event["max_depth"], # X
-                    vertex["level"]  # X
-                )
+                self._event["max_depth"] = max(self._event["max_depth"], vertex["level"])  # X  # X  # X
 
         if not check:
             return lineno, self._event
 
         for vid, v in make_iter(self._event["vertices"]):
-            self._check(# X
-                len(v["outgoing"]) > 0, # X
-                f"No outgoing particles from vertex {vid}: {v}"  # Leave me
-            )
-            self._check(# X
-                len(v["incoming"]) > 0, # X
-                f"No incoming particles to vertex {vid}: {v}"  # Leave me
-            )
+            self._check(len(v["outgoing"]) > 0, f"No outgoing particles from vertex {vid}: {v}")  # X  # X  # Leave me
+            self._check(len(v["incoming"]) > 0, f"No incoming particles to vertex {vid}: {v}")  # X  # X  # Leave me
 
         # for pid,p in enumerate(self._event['particles']):
         for pid, p in make_iter(self._event["particles"]):
@@ -1245,17 +1217,17 @@ class Reader:
 
             self._check(
                 st == 1 or st > 200 or end is not None,
-                ( # X
-                    f'Particle {p["id"]} ({p["pid"]},{st}) ' + # X
-                    "has no end vertex nor is it final state"  # Leave me
-                )
+                (  # X
+                    f'Particle {p["id"]} ({p["pid"]},{st}) '
+                    + "has no end vertex nor is it final state"  # X  # Leave me
+                ),
             )
             self._check(
                 st == 4 or orig is not None,
-                ( # X
-                    f'Particle {p["id"]} ({p["pid"]},{st}) ' + # X
-                    "has no production vertex nor is it beam"  # Leave me
-                )
+                (  # X
+                    f'Particle {p["id"]} ({p["pid"]},{st}) '
+                    + "has no production vertex nor is it beam"  # X  # Leave me
+                ),
             )
 
         return lineno, self._event
@@ -1343,11 +1315,7 @@ class HepMCInput(AbstractContextManager):
             event : dict
                 Read event or None
             """
-            self._lineno, ev = self._reader.read( # X
-                self._stream, # X
-                self._lineno, # X
-                check  # Leave me  alone
-            )
+            self._lineno, ev = self._reader.read(self._stream, self._lineno, check)  # X  # X  # X  # Leave me  alone
 
             return ev
 
@@ -2466,9 +2434,8 @@ class Graph:
         except Exception as e:
             raise e
 
-        dot = Digraph( # X
-            name=f"{self._prefix}_event{no:06d}", # X
-            comment=f'{self._prefix} Event # {event["number"]}'  # Leave me
+        dot = Digraph(  # X
+            name=f"{self._prefix}_event{no:06d}", comment=f'{self._prefix} Event # {event["number"]}'  # X  # Leave me
         )
         dot.attr("node", shape="rectangle")
 
@@ -2589,12 +2556,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
 
     ap = ArgumentParser("Show HepMC3 event record")
-    ap.add_argument(
-        "input", # Leave
-        type=str, # my
-        nargs="+", # formatting
-        help="Input HepMC file(s)"  # alone
-    )
+    ap.add_argument("input", type=str, nargs="+", help="Input HepMC file(s)")  # Leave  # my  # formatting  # alone
     ap.add_argument(
         "-n",  # Leave
         "--maxev",  # my
@@ -2650,14 +2612,11 @@ if __name__ == "__main__":
         default=5,  # alone
         help=(
             "Mark vertex which do not preserve energy "  # X
-            "above given percentage" # X
+            "above given percentage"  # X
         ),
     )
     ap.add_argument(
-        "-D", # Leave
-        "--dump", # My
-        action="store_true", # formatting
-        help="Write graphs to file" # alone
+        "-D", "--dump", action="store_true", help="Write graphs to file"  # Leave  # My  # formatting  # alone
     )
 
     args = ap.parse_args()

@@ -1,0 +1,326 @@
+// Copyright 2023-2099 CERN and copyright holders of ALICE O2.
+// See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
+// All rights not expressly granted are reserved.
+//
+// This software is distributed under the terms of the GNU General Public
+// License v3 (GPL Version 3), copied verbatim in the file "COPYING".
+//
+// In applying this license CERN does not waive the privileges and immunities
+// granted to it by virtue of its status as an Intergovernmental Organization
+// or submit itself to any jurisdiction.
+//
+// #include <Framework/AnalysisTask.h>
+#include <Framework/AnalysisHelpers.h>
+#include <Framework/AnalysisTask.h>
+#include <Generators/AODToHepMC.h>
+#include "Wrapper.h"
+#define RIVET_TASK_AUX
+
+template <typename T>
+using OutputObj = o2::framework::OutputObj<T>;
+
+#ifndef RIVET_TASK_AUX
+//--------------------------------------------------------------------
+using o2::framework::ConfigParamKind;
+using o2::framework::ConfigParamSpec;
+
+// -------------------------------------------------------------------
+void customize(std::vector<ConfigParamSpec>& workflowOptions)
+{
+  using o2::framework::VariantType;
+
+  workflowOptions.emplace_back(ConfigParamSpec{"hepmc-aux",               //
+                                               VariantType::Bool,         //
+                                               false,                     //
+                                               {"Also process auxiliary " //
+                                                "HepMC tables"},
+                                               ConfigParamKind::kProcessFlag});
+}
+
+//--------------------------------------------------------------------
+/**
+ * @deprecated Task3
+ */
+struct Task1 {
+  using Converter = o2::eventgen::AODToHepMC;
+  using Wrapper = o2::rivet::Wrapper;
+  using RivetAOsPtr = typename Wrapper::RivetAOsPtr;
+
+  /** Our converter */
+  Converter mConverter;
+  /** Our wrapper */
+  Wrapper mWrapper;
+  /** Our output wrapped */
+  OutputObj<o2::rivet::RivetAOs> mOutput{o2::rivet::RivetAOs()};
+
+  /** @{
+      @name Container types */
+  using Headers = Converter::Headers;
+  using Header = Converter::Header;
+  using Tracks = Converter::Tracks;
+  using XSections = Converter::XSections;
+  using XSection = Converter::XSection;
+  using PdfInfos = Converter::PdfInfos;
+  using PdfInfo = Converter::PdfInfo;
+  using HeavyIons = Converter::HeavyIons;
+  using HeavyIon = Converter::HeavyIon;
+  /** @} */
+
+  /** Initialize the job */
+  void init(o2::framework::InitContext&)
+  {
+    mConverter.init();
+    mWrapper.init(mOutput.object);
+  }
+  /** Process input */
+  void process(Header const& collision,
+               Tracks const& tracks,
+               XSections const& xsections,
+               PdfInfos const& pdfs,
+               HeavyIons const& heavyions)
+  {
+    LOG(info) << "=== Processing tracks and auxiliary header information";
+    assert(xsections.size() == 1);
+    assert(heavyions.size() == 1);
+    assert(pdfs.size() == 1);
+
+    mConverter.startEvent();
+    mConverter.process(collision,  // Prevent
+                       xsections,  // clang-format
+                       pdfs,       // from putting this
+                       heavyions); // on one big line
+    mConverter.process(collision, tracks);
+    mConverter.endEvent();
+
+    mWrapper.process(mConverter.mEvent);
+  }
+};
+//--------------------------------------------------------------------
+/**
+ * @deprecated Task3
+ */
+struct Task2 {
+  using Converter = o2::eventgen::AODToHepMC;
+  using Wrapper = o2::rivet::Wrapper;
+  using RivetAOsPtr = typename Wrapper::RivetAOsPtr;
+
+  /** Our converter */
+  Converter mConverter;
+  /** Our wrapper */
+  Wrapper mWrapper;
+  /** Our output wrapped */
+  OutputObj<o2::rivet::RivetAOs> mOutput{o2::rivet::RivetAOs()};
+
+  /** @{
+      @name Container types */
+  using Headers = Converter::Headers;
+  using Header = Converter::Header;
+  using Tracks = Converter::Tracks;
+  /** @} */
+
+  /** Initialize the job */
+  void init(o2::framework::InitContext&)
+  {
+    mConverter.init();
+    mWrapper.init(mOutput.object);
+  }
+  /** Process input */
+  void process(Header const& collision,
+               Tracks const& tracks)
+  {
+    // processAux(collision, xsections, pdfs, heavyions);
+    LOG(info) << "Processing header and tracks";
+    mConverter.startEvent();
+    mConverter.process(collision, tracks);
+    mConverter.endEvent();
+
+    mWrapper.process(mConverter.mEvent);
+  }
+};
+#else
+
+//--------------------------------------------------------------------
+/** A DPL to process simulation output (@c o2::aod::MCCollision and @c
+ *  o2::aod::McParticles) in Rivet analyses.
+ *
+ *  The code uses the service classes @c o2::eventgen::AODToHepMC and
+ *  @c o2::rivet::Wrapper to fulfill this task.
+ *
+ *  The output (result of the analyses) is stored in a @c
+ *  o2::rivet::RivetAOs object.  This object essentially contain a
+ *  string containing the YODA objects generated by the Rivet
+ *  Analyses.  Therefore, to get the output of the Rivet analyses,
+ *  one need to retrieve the object from the output file
+ *
+ *  @verbatim
+ *  $ root -l O2Physics/PWGMM/Rivet/macros/GetRivetAOs.macro\(\"AnalysisResults.root\"\)
+ *  @endverbatim
+ *
+ *  which will write the YODA analysis objects to @c AnalysisResults.yoda
+ *
+ *  Alternatively one can pass the option @c --rivet-dump
+ *  Rivet.yoda to get the (partial) output written to disk.
+ *
+ *  One can then process the YODA file as per normal Rivet
+ *  analyses, for example in Python
+ *
+ *  @code
+ *  from yoda import read
+ *  from matplotlib.pyplot import gca, ion
+ *
+ *  ion()
+ *  aos  = read('Rivet.yoda')
+ *  hist = aos['/ALICE_YYYY_I1234567/d01-x01-y01']
+ *  ax   = gca()
+ *  ax.errorbar(hist.xMids(),hist.yVals(),hist.yErrs())
+ *  @endcode
+ *
+ * If the processing of the input is split over many jobs (e.g., on
+ * the Grid), then the resulting `AnalysisResults.root` files can be
+ * merged
+ *
+ * @verbatim
+ * hadd Merged.root AnalysisResults_1.root AnalysisResults_2.root ...
+ * @endverbatim
+ *
+ * and the @c RivetAOs will be merged and the `terminate` step of the
+ * Rivet analysis performed.
+ *
+ * The option `--hepmc-no-aux` disables passing of HepMC auxiliary
+ * tables (Cross-section, PDF information, and Heavy-ion header).
+ *
+ * The thing to remember here, is that each task process is expected
+ * to do a _complete_ job.  That is, a process _cannot_ assume that
+ * another process has been called before-hand or will be called
+ * later, for the same event in the same order.
+ *
+ * That is, each process will get _all_ events of a time-frame and
+ * then the next process will get _all_ events of the time-frame.
+ *
+ * Processed do not process events piece-meal, but rather in whole.
+ */
+struct Task3 {
+  using Converter = o2::eventgen::AODToHepMC;
+  using Wrapper = o2::rivet::Wrapper;
+  using RivetAOsPtr = typename Wrapper::RivetAOsPtr;
+
+  /** Our converter */
+  Converter mConverter;
+  /** Our wrapper */
+  Wrapper mWrapper;
+  /** Our output wrapped */
+  OutputObj<o2::rivet::RivetAOs> mOutput{o2::rivet::RivetAOs()};
+
+  /** @{
+   *  @name Container types */
+  using Headers = Converter::Headers;
+  using Header = Converter::Header;
+  using Tracks = Converter::Tracks;
+  using XSections = Converter::XSections;
+  using XSection = Converter::XSection;
+  using PdfInfos = Converter::PdfInfos;
+  using PdfInfo = Converter::PdfInfo;
+  using HeavyIons = Converter::HeavyIons;
+  using HeavyIon = Converter::HeavyIon;
+  /** @} */
+
+  /** Initialize the job */
+  void init(o2::framework::InitContext&)
+  {
+    mConverter.init();
+    mWrapper.init(mOutput.object);
+  }
+  /** Process events */
+  void process(Header const& collision,
+               XSections const& xsections,
+               PdfInfos const& pdfs,
+               HeavyIons const& heavyions,
+               Tracks const& tracks)
+  {
+    // In case we were passed the option `--hepmc-no-aux`, then do no
+    // processing anything here, as it will double count the event.
+    // The issue is, that each time frame is sent to each process of
+    // the task independent of one another.  That means this process
+    // will get _all_ events one at a time, and only when that is done
+    // will the events be passed to other process member functions,
+    // again one event at a time.  Thus, we cannot rely on the events
+    // being _distributed_ to the processes at the same time.
+    if (doPlain) {
+      return;
+    }
+    LOG(info) << "=== Processing all information";
+    // assert(xsections.size() == 1);
+    // assert(heavyions.size() == 1);
+    // assert(pdfs.size() == 1);
+    mConverter.startEvent();
+    mConverter.process(collision,  // Prevent
+                       xsections,  // clang-format
+                       pdfs,       // from putting this
+                       heavyions); // on one big line
+    mConverter.process(collision, tracks);
+    mConverter.endEvent();
+
+    mWrapper.process(mConverter.mEvent);
+  }
+  /** Process input */
+  void processPlain(Header const& collision,
+                    Tracks const& tracks)
+  {
+    // If we're also asked to process the auxiliary information, then
+    // do nothing here, as that will mess up the processing.
+    if (!doPlain) {
+      return;
+    }
+
+    LOG(info) << "=== Processing tracks and header information";
+
+    mConverter.startEvent();
+    mConverter.process(collision, tracks);
+    mConverter.endEvent();
+
+    mWrapper.process(mConverter.mEvent);
+  }
+  decltype(o2::framework::ProcessConfigurable{&Task3::processPlain,
+                                              "hepmx-no-aux", false,
+                                              "Do not process Auxiliary info"})
+    doPlain = o2::framework::ProcessConfigurable{&Task3::processPlain,
+                                                 "hepmc-no-aux", false,
+                                                 "Do not process "
+                                                 "Auxillary info"};
+};
+#endif
+
+//--------------------------------------------------------------------
+// This _must_ be included after our "customize" function above, or
+// that function will not be taken into account.
+#include <Framework/runDataProcessing.h>
+
+//--------------------------------------------------------------------
+using WorkflowSpec = o2::framework::WorkflowSpec;
+using TaskName = o2::framework::TaskName;
+using DataProcessorSpec = o2::framework::DataProcessorSpec;
+using ConfigContext = o2::framework::ConfigContext;
+
+/** Entry point of @a o2-analysis-mm-rivet */
+WorkflowSpec defineDataProcessing(ConfigContext const& cfg)
+{
+  using o2::framework::adaptAnalysisTask;
+
+  // Task1: One entry: header, tracks, auxiliary
+  // Task2: One entry: header, tracks
+  // Task3: Two entry: header, tracks, and auxiliary
+#ifdef RIVET_TASK_AUX
+  return WorkflowSpec{
+    adaptAnalysisTask<Task3>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+#else
+  if (cfg.options().get<bool>("hepmc-aux")) {
+    return WorkflowSpec{
+      adaptAnalysisTask<Task1>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+  }
+  return WorkflowSpec{
+    adaptAnalysisTask<Task2>(cfg, TaskName{"o2-analysis-mm-rivet"})};
+#endif
+}
+//
+// EOF
+//
